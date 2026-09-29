@@ -1,0 +1,3629 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snap2HTML Tools Filter & Extractor v15</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Theme tokens — default 90s */
+  :root, [data-theme="90s"] {
+    --bg: #008080;
+    --app-bg: #c0c0c0;
+    --text: #000000;
+    --muted: #404040;
+    --title-bg: linear-gradient(90deg, #000080, #1084d0);
+    --title-text: #ffffff;
+    --section-bg: #c0c0c0;
+    --panel-bg: #c0c0c0;
+    --sunken-bg: #ffffff;
+    --border-light: #ffffff;
+    --border-dark: #000000;
+    --border-mid: #808080;
+    --accent: #000080;
+    --accent-text: #ffffff;
+    --hover-bg: #000080;
+    --hover-text: #ffffff;
+    --ok: #008000;
+    --err: #800000;
+    --row-alt: #f0f0f0;
+    --btn-bg: #c0c0c0;
+    --font: "MS Sans Serif", "Microsoft Sans Serif", Tahoma, sans-serif;
+    --radius: 0px;
+    --shadow: 2px 2px 0 #000;
+    --input-bg: #ffffff;
+    --table-head: #c0c0c0;
+    --drop-bg: #ffffff;
+    --drop-hover: #e8e8ff;
+    --drop-ok: #e8ffe8;
+  }
+
+  body {
+    font-family: var(--font);
+    font-size: 12px;
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.55s ease, color 0.35s ease;
+  }
+
+  /* Full-page window */
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    height: 100dvh;
+    background: var(--app-bg);
+    border-top: 2px solid var(--border-light);
+    border-left: 2px solid var(--border-light);
+    border-right: 2px solid var(--border-dark);
+    border-bottom: 2px solid var(--border-dark);
+    box-shadow: var(--shadow);
+    border-radius: var(--radius);
+    transition: background 0.55s ease, border-radius 0.45s ease, box-shadow 0.45s ease;
+  }
+
+  .title-bar {
+    flex-shrink: 0;
+    background: var(--title-bg);
+    color: var(--title-text);
+    padding: 4px 6px;
+    font-weight: bold;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    gap: 8px;
+    transition: background 0.55s ease, color 0.35s ease;
+  }
+  .title-bar-text { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .version-badge {
+    font-size: 10px;
+    font-weight: bold;
+    padding: 1px 6px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.45);
+    border-radius: 3px;
+    opacity: 0.95;
+    flex-shrink: 0;
+  }
+  .title-bar-icon {
+    width: 16px; height: 16px; background: var(--btn-bg); border: 1px solid var(--border-dark);
+    font-size: 10px; text-align: center; line-height: 14px; flex-shrink: 0;
+    transition: background 0.4s ease;
+  }
+  .title-bar-controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .title-bar-controls button {
+    width: 18px; height: 16px; padding: 0; margin-left: 2px;
+    font-size: 10px; font-weight: bold; background: var(--btn-bg); color: var(--text);
+    border-top: 1px solid var(--border-light); border-left: 1px solid var(--border-light);
+    border-right: 1px solid var(--border-dark); border-bottom: 1px solid var(--border-dark); cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .theme-select {
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 2px 4px;
+    background: var(--input-bg);
+    color: var(--text);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius);
+    max-width: 110px;
+    cursor: pointer;
+    transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease;
+  }
+
+  .main {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    padding: 6px;
+    gap: 6px;
+  }
+
+  /* LEFT panel — stacked sections */
+  .left {
+    width: 380px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .left-scroll {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    padding-right: 2px;
+  }
+
+  /* RIGHT panel — results */
+  .right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    background: var(--panel-bg);
+    border-top: 2px solid var(--border-light);
+    border-left: 2px solid var(--border-light);
+    border-right: 2px solid var(--border-mid);
+    border-bottom: 2px solid var(--border-mid);
+    padding: 6px;
+    border-radius: var(--radius);
+    transition: background 0.5s ease, border-radius 0.4s ease;
+  }
+
+  .section {
+    background: var(--section-bg);
+    border-top: 2px solid var(--border-light);
+    border-left: 2px solid var(--border-light);
+    border-right: 2px solid var(--border-mid);
+    border-bottom: 2px solid var(--border-mid);
+    padding: 8px;
+    flex-shrink: 0;
+    border-radius: var(--radius);
+    transition: background 0.5s ease, border-radius 0.4s ease, color 0.35s ease;
+  }
+  .section.grow {
+    flex: 1;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .section-title {
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .section-title .num {
+    background: var(--accent); color: var(--accent-text);
+    width: 18px; height: 18px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: bold;
+    border-radius: calc(var(--radius) / 2);
+    transition: background 0.45s ease, color 0.35s ease, border-radius 0.4s ease;
+  }
+
+  /* Drop zone */
+  .drop-zone {
+    display: block;
+    border: 2px dashed var(--border-mid);
+    background: var(--drop-bg);
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: background 0.4s ease, border-color 0.35s ease, border-radius 0.4s ease;
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: var(--drop-hover); }
+  .drop-zone.has-file { border-color: var(--ok); background: var(--drop-ok); }
+  .drop-text { color: var(--text); line-height: 1.4; pointer-events: none; }
+  .file-info { margin-top: 6px; color: var(--ok); font-weight: bold; display: none; font-size: 11px; pointer-events: none; }
+
+  /* Filters */
+  .ext-grid {
+    display: flex; flex-wrap: wrap; gap: 6px 10px; align-content: flex-start;
+    background: var(--sunken-bg); color: var(--text);
+    border-top: 1px solid var(--border-mid); border-left: 1px solid var(--border-mid);
+    border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);
+    padding: 8px; min-height: 120px; max-height: 220px; overflow-y: auto;
+    border-radius: var(--radius);
+  }
+  .ext-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; color: var(--text); background: var(--btn-bg);
+    border: 1px solid var(--border-mid); border-radius: 3px; padding: 3px 8px;
+    cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  .ext-chip input { margin: 0; width: 14px; height: 14px; }
+
+  details.section { display: block; overflow: visible; }
+  .collapsible-sec > summary {
+    list-style: none; cursor: default;
+    font-weight: bold; font-size: 12px; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .collapsible-sec > summary::-webkit-details-marker { display: none; }
+
+  .row { display: flex; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+  .row label { font-weight: bold; }
+
+  input[type="number"], input[type="text"], select {
+    font-family: inherit; font-size: 12px; padding: 3px 5px;
+    border-top: 2px solid var(--border-mid); border-left: 2px solid var(--border-mid);
+    border-right: 2px solid var(--border-light); border-bottom: 2px solid var(--border-light);
+    background: var(--input-bg);
+    color: var(--text);
+    border-radius: var(--radius);
+    transition: background 0.35s ease, color 0.35s ease, border-radius 0.35s ease;
+  }
+  input[type="text"].search { width: 100%; }
+
+  .btn {
+    font-family: inherit; font-size: 11px; padding: 3px 10px;
+    background: var(--btn-bg);
+    color: var(--text);
+    border-top: 2px solid var(--border-light); border-left: 2px solid var(--border-light);
+    border-right: 2px solid var(--border-dark); border-bottom: 2px solid var(--border-dark);
+    cursor: pointer; min-width: 60px;
+    border-radius: var(--radius);
+    transition: background 0.35s ease, color 0.3s ease, border-radius 0.35s ease, transform 0.15s ease;
+  }
+  .btn:active:not(:disabled) {
+    border-top: 2px solid var(--border-dark); border-left: 2px solid var(--border-dark);
+    border-right: 2px solid var(--border-light); border-bottom: 2px solid var(--border-light);
+    padding: 4px 9px 2px 11px;
+  }
+  .btn:disabled { color: var(--border-mid); cursor: default; opacity: 0.7; }
+  .btn:focus { outline: 1px dotted var(--text); outline-offset: -3px; }
+  .btn-primary { font-weight: bold; background: var(--accent); color: var(--accent-text); }
+
+  .preset-row { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 4px; }
+
+  /* Folder list */
+  .folder-list {
+    flex: 1; overflow-y: auto; background: var(--sunken-bg);
+    border-top: 2px solid var(--border-mid); border-left: 2px solid var(--border-mid);
+    border-right: 2px solid var(--border-light); border-bottom: 2px solid var(--border-light);
+    min-height: 80px; max-height: 180px;
+    border-radius: var(--radius);
+    transition: background 0.4s ease;
+  }
+  .folder-item {
+    display: flex; align-items: flex-start; gap: 4px;
+    padding: 3px 5px; border-bottom: 1px solid var(--row-alt);
+    font-size: 11px; cursor: default;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .folder-item:hover { background: var(--hover-bg); color: var(--hover-text); }
+  .folder-item input { margin-top: 2px; flex-shrink: 0; }
+  .folder-item .fp { word-break: break-all; flex: 1; }
+  .folder-item .fc { color: var(--ok); white-space: nowrap; font-size: 10px; }
+  .folder-item:hover .fc { color: var(--hover-text); opacity: 0.9; }
+
+  /* Results right side */
+  .results-toolbar {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    margin-bottom: 4px; flex-shrink: 0;
+  }
+  .stats { flex: 1; font-size: 11px; min-width: 120px; }
+  .checked-info {
+    background: var(--sunken-bg);
+    color: var(--text);
+    border-top: 1px solid var(--border-mid); border-left: 1px solid var(--border-mid);
+    border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);
+    padding: 2px 8px; font-size: 11px; font-weight: bold;
+    border-radius: var(--radius);
+    transition: background 0.4s ease, color 0.35s ease;
+  }
+
+  .table-wrap {
+    flex: 1; overflow: auto; background: var(--sunken-bg); min-height: 0;
+    border-top: 2px solid var(--border-mid); border-left: 2px solid var(--border-mid);
+    border-right: 2px solid var(--border-light); border-bottom: 2px solid var(--border-light);
+    border-radius: var(--radius);
+    transition: background 0.4s ease;
+  }
+
+  table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+  thead { position: sticky; top: 0; z-index: 2; }
+  th {
+    background: var(--table-head); color: var(--text); text-align: left; padding: 4px 6px; font-weight: bold;
+    border-bottom: 1px solid var(--border-mid); border-right: 1px solid var(--border-mid);
+    white-space: nowrap; cursor: pointer; user-select: none; position: relative;
+    transition: background 0.35s ease, color 0.3s ease;
+  }
+  th:hover { filter: brightness(1.08); }
+  th.sorted-asc::after { content: " ▲"; font-size: 9px; }
+  th.sorted-desc::after { content: " ▼"; font-size: 9px; }
+  th.no-sort { cursor: default; }
+  th.no-sort:hover { filter: none; }
+  th .col-resizer {
+    position: absolute; top: 0; right: 0; width: 6px; height: 100%;
+    cursor: col-resize; user-select: none; z-index: 3;
+  }
+  th .col-resizer:hover, th .col-resizer.active {
+    background: var(--accent); opacity: 0.45;
+  }
+  body.col-resizing { cursor: col-resize !important; user-select: none !important; }
+  body.col-resizing * { cursor: col-resize !important; }
+
+  td {
+    padding: 2px 6px; border-bottom: 1px solid var(--row-alt); border-right: 1px solid var(--row-alt);
+    vertical-align: middle; overflow: hidden; text-overflow: ellipsis;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  tr:nth-child(even) td { background: var(--row-alt); }
+  tr:hover td { background: var(--hover-bg); color: var(--hover-text); }
+
+  .col-check { width: 28px; text-align: center; }
+  .col-check input { cursor: pointer; }
+  .col-num { width: 40px; }
+  .col-name { width: 280px; word-break: break-all; white-space: normal; }
+  .col-path { width: 260px; word-break: break-all; white-space: normal; }
+  .col-size { white-space: nowrap; text-align: right; font-family: "Courier New", monospace; width: 90px; }
+  .col-ext { font-family: "Courier New", monospace; text-transform: lowercase; width: 55px; }
+  .col-date { width: 100px; white-space: nowrap; }
+  .col-custom { width: 120px; word-break: break-all; }
+
+  .panel-full {
+    flex: 1; display: flex; flex-direction: column; min-height: 0; min-width: 0;
+    padding: 8px; gap: 8px; overflow: hidden;
+  }
+  .panel-full .table-wrap { flex: 1; min-height: 120px; }
+  .editable-cell {
+    width: 100%; font-family: inherit; font-size: 11px; padding: 2px 4px;
+    border: 1px solid var(--border-mid); background: var(--input-bg); color: var(--text);
+    border-radius: var(--radius);
+  }
+  .merge-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: 1; min-height: 0;
+  }
+  .merge-side {
+    display: flex; flex-direction: column; min-height: 0; min-width: 0;
+    background: var(--section-bg);
+    border-top: 2px solid var(--border-light); border-left: 2px solid var(--border-light);
+    border-right: 2px solid var(--border-mid); border-bottom: 2px solid var(--border-mid);
+    padding: 6px; border-radius: var(--radius);
+  }
+  .merge-side h3 { font-size: 12px; margin-bottom: 4px; }
+  .merge-missing {
+    flex: 0 0 auto; max-height: 30%; min-height: 80px; overflow: auto;
+    background: var(--sunken-bg);
+    border-top: 2px solid var(--border-mid); border-left: 2px solid var(--border-mid);
+    border-right: 2px solid var(--border-light); border-bottom: 2px solid var(--border-light);
+    padding: 6px; border-radius: var(--radius);
+  }
+  @media (max-width: 900px) {
+    .merge-grid { grid-template-columns: 1fr; }
+  }
+
+  .empty-state { text-align: center; padding: 40px 12px; color: var(--muted); }
+
+  .actions {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-mid); flex-shrink: 0;
+  }
+
+  .export-opts {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    font-size: 11px; margin-top: 4px;
+  }
+  .export-opts label { display: inline-flex; align-items: center; gap: 3px; cursor: pointer; }
+
+  .status-bar {
+    flex-shrink: 0;
+    padding: 3px 8px;
+    background: var(--app-bg);
+    color: var(--text);
+    border-top: 1px solid var(--border-mid);
+    font-size: 11px;
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    justify-content: space-between;
+    transition: background 0.5s ease, color 0.35s ease;
+  }
+  .status-bar .ok { color: var(--ok); font-weight: bold; }
+  .status-bar .err { color: var(--err); font-weight: bold; }
+  .status-left { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+  .status-credit {
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .status-credit a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: bold;
+  }
+  .status-credit a:hover { text-decoration: underline; }
+  .wa-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #128C7E !important;
+  }
+
+  html[dir="rtl"] .title-bar-controls { flex-direction: row-reverse; }
+  html[dir="rtl"] .main { direction: rtl; }
+  html[dir="rtl"] .col-size { text-align: left; }
+  html[dir="rtl"] th[data-sort="size"] { text-align: left; }
+
+  /* Tool switcher under title bar */
+  .tool-tabs {
+    flex-shrink: 0;
+    display: flex;
+    gap: 0;
+    background: var(--app-bg);
+    border-bottom: 1px solid var(--border-mid);
+    padding: 0 6px;
+  }
+  .tool-tab {
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: bold;
+    padding: 6px 14px;
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+  }
+  .tool-tab:hover { color: var(--text); background: rgba(0,0,0,0.05); }
+  .tool-tab.active {
+    color: var(--accent-text);
+    background: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .panel-hidden { display: none !important; }
+
+  .clone-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 10px;
+    gap: 10px;
+    overflow: auto;
+  }
+  .clone-card {
+    background: var(--section-bg);
+    border-top: 2px solid var(--border-light);
+    border-left: 2px solid var(--border-light);
+    border-right: 2px solid var(--border-mid);
+    border-bottom: 2px solid var(--border-mid);
+    border-radius: var(--radius);
+    padding: 12px;
+    max-width: 720px;
+  }
+  .clone-note {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.45;
+    margin-top: 8px;
+  }
+  .clone-stats {
+    margin-top: 10px;
+    padding: 8px;
+    background: var(--sunken-bg);
+    border-radius: var(--radius);
+    font-size: 12px;
+  }
+
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 12px 8px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .loading.show { display: block; }
+  .loading-spinner {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    margin: 0 auto 8px;
+    border: 3px solid var(--border-mid);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spinLoad 0.7s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spinLoad {
+    to { transform: rotate(360deg); }
+  }
+  .loading-text { display: block; margin-top: 4px; }
+
+  .sunken {
+    background: var(--sunken-bg);
+    color: var(--text);
+    border-top: 2px solid var(--border-mid); border-left: 2px solid var(--border-mid);
+    border-right: 2px solid var(--border-light); border-bottom: 2px solid var(--border-light);
+    padding: 2px 6px; font-size: 11px;
+    border-radius: var(--radius);
+  }
+
+  /* Theme cross-fade flash */
+  body.theme-switching::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: 9999;
+    animation: themeFlash 0.55s ease forwards;
+  }
+  @keyframes themeFlash {
+    0% { opacity: 0.35; }
+    100% { opacity: 0; }
+  }
+
+  /* ========== Decade themes ========== */
+  [data-theme="70s"] {
+    --bg: #3d2914;
+    --app-bg: #c4a574;
+    --text: #1a1008;
+    --muted: #5c4030;
+    --title-bg: linear-gradient(90deg, #6b2d1a, #c45c26);
+    --title-text: #f5e6c8;
+    --section-bg: #d4b896;
+    --panel-bg: #d4b896;
+    --sunken-bg: #f0e0c0;
+    --border-light: #e8d4a8;
+    --border-dark: #3d2914;
+    --border-mid: #8b6914;
+    --accent: #8b2500;
+    --accent-text: #fff5e0;
+    --hover-bg: #8b2500;
+    --hover-text: #fff5e0;
+    --ok: #2d5a1e;
+    --err: #8b0000;
+    --row-alt: #e8d4b0;
+    --btn-bg: #c4a574;
+    --font: Georgia, "Times New Roman", serif;
+    --radius: 2px;
+    --shadow: 3px 3px 0 #2a1a0a;
+    --input-bg: #f5ebd4;
+    --table-head: #b8956a;
+    --drop-bg: #f0e0c0;
+    --drop-hover: #e8c9a0;
+    --drop-ok: #d4e8c4;
+  }
+
+  [data-theme="80s"] {
+    --bg: #1a0033;
+    --app-bg: #2d1b4e;
+    --text: #ff00ff;
+    --muted: #00ffff;
+    --title-bg: linear-gradient(90deg, #ff00aa, #00e5ff, #ff00aa);
+    --title-text: #ffffff;
+    --section-bg: #1f0a3c;
+    --panel-bg: #1f0a3c;
+    --sunken-bg: #0d0220;
+    --border-light: #00ffff;
+    --border-dark: #ff00ff;
+    --border-mid: #7b2cbf;
+    --accent: #00ff88;
+    --accent-text: #0d0220;
+    --hover-bg: #ff00aa;
+    --hover-text: #ffffff;
+    --ok: #00ff88;
+    --err: #ff3366;
+    --row-alt: #160830;
+    --btn-bg: #3d1f6b;
+    --font: "Courier New", Consolas, monospace;
+    --radius: 0px;
+    --shadow: 0 0 12px #ff00ff, 0 0 4px #00ffff;
+    --input-bg: #0d0220;
+    --table-head: #3d1f6b;
+    --drop-bg: #0d0220;
+    --drop-hover: #2a1050;
+    --drop-ok: #0a3020;
+  }
+
+  [data-theme="2000s"] {
+    --bg: #3a6ea5;
+    --app-bg: #ece9d8;
+    --text: #000000;
+    --muted: #555555;
+    --title-bg: linear-gradient(180deg, #0a246a 0%, #a6caf0 3%, #0a246a 100%);
+    --title-text: #ffffff;
+    --section-bg: #ece9d8;
+    --panel-bg: #ece9d8;
+    --sunken-bg: #ffffff;
+    --border-light: #ffffff;
+    --border-dark: #404040;
+    --border-mid: #aca899;
+    --accent: #0a246a;
+    --accent-text: #ffffff;
+    --hover-bg: #316ac5;
+    --hover-text: #ffffff;
+    --ok: #008000;
+    --err: #c00000;
+    --row-alt: #f5f5f0;
+    --btn-bg: #ece9d8;
+    --font: Tahoma, "Segoe UI", sans-serif;
+    --radius: 3px;
+    --shadow: 2px 2px 4px rgba(0,0,0,0.25);
+    --input-bg: #ffffff;
+    --table-head: #d4d0c8;
+    --drop-bg: #ffffff;
+    --drop-hover: #cfe0f5;
+    --drop-ok: #e0f0e0;
+  }
+
+  [data-theme="2010s"] {
+    --bg: #1e1e1e;
+    --app-bg: #2d2d30;
+    --text: #f1f1f1;
+    --muted: #9d9d9d;
+    --title-bg: linear-gradient(90deg, #007acc, #005a9e);
+    --title-text: #ffffff;
+    --section-bg: #252526;
+    --panel-bg: #252526;
+    --sunken-bg: #1e1e1e;
+    --border-light: #3f3f46;
+    --border-dark: #000000;
+    --border-mid: #3e3e42;
+    --accent: #007acc;
+    --accent-text: #ffffff;
+    --hover-bg: #094771;
+    --hover-text: #ffffff;
+    --ok: #4ec9b0;
+    --err: #f44747;
+    --row-alt: #2a2a2d;
+    --btn-bg: #3c3c3c;
+    --font: "Segoe UI", system-ui, sans-serif;
+    --radius: 4px;
+    --shadow: 0 4px 16px rgba(0,0,0,0.45);
+    --input-bg: #3c3c3c;
+    --table-head: #333337;
+    --drop-bg: #1e1e1e;
+    --drop-hover: #2a3a4a;
+    --drop-ok: #1e3a2a;
+  }
+
+  [data-theme="2020s"] {
+    --bg: #0f172a;
+    --app-bg: #1e293b;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --title-bg: linear-gradient(90deg, #6366f1, #8b5cf6);
+    --title-text: #ffffff;
+    --section-bg: #1e293b;
+    --panel-bg: #1e293b;
+    --sunken-bg: #0f172a;
+    --border-light: #334155;
+    --border-dark: #020617;
+    --border-mid: #475569;
+    --accent: #6366f1;
+    --accent-text: #ffffff;
+    --hover-bg: #4f46e5;
+    --hover-text: #ffffff;
+    --ok: #22c55e;
+    --err: #ef4444;
+    --row-alt: #1a2332;
+    --btn-bg: #334155;
+    --font: Inter, system-ui, -apple-system, sans-serif;
+    --radius: 10px;
+    --shadow: 0 8px 30px rgba(0,0,0,0.4);
+    --input-bg: #0f172a;
+    --table-head: #273549;
+    --drop-bg: #0f172a;
+    --drop-hover: #1e3a5f;
+    --drop-ok: #14532d;
+  }
+
+  [data-theme="2030"] {
+    --bg: #050510;
+    --app-bg: #0c0c1a;
+    --text: #e0f7ff;
+    --muted: #7dd3fc;
+    --title-bg: linear-gradient(90deg, #06b6d4, #3b82f6, #a855f7);
+    --title-text: #ffffff;
+    --section-bg: #12122a;
+    --panel-bg: #12122a;
+    --sunken-bg: #080818;
+    --border-light: #22d3ee;
+    --border-dark: #020208;
+    --border-mid: #1e3a5f;
+    --accent: #22d3ee;
+    --accent-text: #050510;
+    --hover-bg: #0891b2;
+    --hover-text: #ffffff;
+    --ok: #34d399;
+    --err: #fb7185;
+    --row-alt: #0e0e20;
+    --btn-bg: #1a1a35;
+    --font: "Segoe UI", system-ui, sans-serif;
+    --radius: 12px;
+    --shadow: 0 0 24px rgba(34, 211, 238, 0.25), 0 8px 32px rgba(0,0,0,0.5);
+    --input-bg: #080818;
+    --table-head: #1a1a35;
+    --drop-bg: #080818;
+    --drop-hover: #0c2a3a;
+    --drop-ok: #0a2a1a;
+  }
+
+  [data-theme="2040s"] {
+    --bg: #0a0a0a;
+    --app-bg: #111111;
+    --text: #d4ff00;
+    --muted: #88aa44;
+    --title-bg: linear-gradient(90deg, #111111, #1a1a00, #111111);
+    --title-text: #d4ff00;
+    --section-bg: #161616;
+    --panel-bg: #161616;
+    --sunken-bg: #0a0a0a;
+    --border-light: #333300;
+    --border-dark: #000000;
+    --border-mid: #2a2a00;
+    --accent: #d4ff00;
+    --accent-text: #0a0a0a;
+    --hover-bg: #d4ff00;
+    --hover-text: #0a0a0a;
+    --ok: #88ff00;
+    --err: #ff4444;
+    --row-alt: #141414;
+    --btn-bg: #1c1c1c;
+    --font: "Courier New", ui-monospace, monospace;
+    --radius: 0px;
+    --shadow: 0 0 0 1px #d4ff00, 0 0 20px rgba(212, 255, 0, 0.15);
+    --input-bg: #0a0a0a;
+    --table-head: #1c1c1c;
+    --drop-bg: #0a0a0a;
+    --drop-hover: #1a1a00;
+    --drop-ok: #0a1a00;
+  }
+
+  [data-theme="2050s"] {
+    --bg: #f8fafc;
+    --app-bg: rgba(255,255,255,0.72);
+    --text: #0f172a;
+    --muted: #64748b;
+    --title-bg: linear-gradient(120deg, #a78bfa, #38bdf8, #34d399);
+    --title-text: #0f172a;
+    --section-bg: rgba(255,255,255,0.55);
+    --panel-bg: rgba(255,255,255,0.55);
+    --sunken-bg: rgba(255,255,255,0.85);
+    --border-light: rgba(255,255,255,0.9);
+    --border-dark: rgba(15,23,42,0.15);
+    --border-mid: rgba(15,23,42,0.12);
+    --accent: #8b5cf6;
+    --accent-text: #ffffff;
+    --hover-bg: #8b5cf6;
+    --hover-text: #ffffff;
+    --ok: #10b981;
+    --err: #f43f5e;
+    --row-alt: rgba(148,163,184,0.12);
+    --btn-bg: rgba(255,255,255,0.7);
+    --font: system-ui, "Segoe UI", sans-serif;
+    --radius: 16px;
+    --shadow: 0 12px 40px rgba(15,23,42,0.12);
+    --input-bg: rgba(255,255,255,0.9);
+    --table-head: rgba(241,245,249,0.95);
+    --drop-bg: rgba(255,255,255,0.8);
+    --drop-hover: rgba(167,139,250,0.15);
+    --drop-ok: rgba(16,185,129,0.12);
+  }
+
+  /* ===== Tablet ===== */
+  @media (max-width: 900px) {
+    .main {
+      flex-direction: column;
+      padding: 4px;
+      gap: 4px;
+    }
+    .left {
+      width: 100%;
+      max-height: 42%;
+      flex-shrink: 0;
+    }
+    .left-scroll {
+      gap: 4px;
+    }
+    .right {
+      flex: 1;
+      min-height: 0;
+      padding: 4px;
+    }
+    .folder-list {
+      max-height: 120px;
+    }
+    .col-path {
+      max-width: 180px;
+    }
+  }
+
+  /* ===== Mobile phones ===== */
+  @media (max-width: 600px) {
+    html, body {
+      overflow: auto;
+      height: auto;
+      min-height: 100%;
+    }
+
+    .app {
+      height: auto;
+      min-height: 100dvh;
+      border: none;
+    }
+
+    .title-bar {
+      padding: 8px 10px;
+      font-size: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      flex-wrap: wrap;
+    }
+    .title-bar-controls button {
+      display: none;
+    }
+    .theme-select {
+      max-width: 100px;
+      font-size: 12px;
+      min-height: 28px;
+    }
+
+    .main {
+      flex-direction: column;
+      padding: 6px;
+      gap: 8px;
+      min-height: 0;
+    }
+
+    .left {
+      width: 100%;
+      max-height: none;
+      overflow: visible;
+    }
+    .left-scroll {
+      overflow: visible;
+      gap: 8px;
+    }
+
+    .section {
+      padding: 10px;
+    }
+
+    .collapsible-sec > summary {
+      cursor: pointer;
+      user-select: none;
+      padding: 4px 0;
+    }
+    .collapsible-sec > summary::after {
+      content: " ▾";
+      font-size: 11px;
+      opacity: 0.7;
+    }
+    .collapsible-sec:not([open]) > summary::after {
+      content: " ▸ press to expand";
+      font-weight: normal;
+      opacity: 0.85;
+    }
+    .folder-list {
+      max-height: 280px !important;
+      min-height: 160px !important;
+    }
+    .ext-grid {
+      min-height: 160px !important;
+      max-height: 280px !important;
+    }
+    .right {
+      height: 65vh !important;
+      min-height: 65vh !important;
+    }
+    .table-wrap {
+      min-height: 50vh;
+    }
+    .section.grow {
+      flex: none;
+      min-height: 0;
+    }
+
+    .drop-zone {
+      padding: 18px 10px;
+    }
+
+    .ext-grid {
+      max-height: 110px;
+    }
+
+    .folder-list {
+      max-height: 160px;
+      min-height: 100px;
+    }
+
+    .right {
+      flex: none;
+      min-height: 55vh;
+      height: 55vh;
+      padding: 6px;
+    }
+
+    .results-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4px;
+    }
+    .stats {
+      min-width: 0;
+    }
+    .checked-info {
+      text-align: center;
+    }
+
+    /* Hide Path column on very small screens — name + size still visible */
+    .col-path,
+    th[data-sort="path"] {
+      display: none;
+    }
+    .col-name {
+      max-width: none;
+    }
+
+    .table-wrap {
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      font-size: 12px;
+    }
+    th, td {
+      padding: 6px 5px;
+    }
+
+    .actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .actions .btn {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 13px;
+      min-height: 40px;
+    }
+
+    .btn {
+      min-height: 32px;
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .preset-row .btn {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .row {
+      gap: 8px;
+    }
+
+    .export-opts {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .status-bar {
+      padding: 6px 10px;
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Larger touch targets for checkboxes */
+    .col-check input,
+    .folder-item input,
+    .ext-chip input {
+      width: 18px;
+      height: 18px;
+    }
+    .folder-item {
+      padding: 6px 5px;
+    }
+  }
+
+  /* ===== Very small phones ===== */
+  @media (max-width: 380px) {
+    body { font-size: 11px; }
+    .title-bar { font-size: 12px; padding: 6px 8px; }
+    th[data-sort="ext"],
+    .col-ext {
+      display: none;
+    }
+    .right {
+      height: 50vh;
+      min-height: 50vh;
+    }
+  }
+
+  /* Landscape mobile: side-by-side again if wide enough height is short */
+  @media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+    html, body {
+      overflow: hidden;
+      height: 100%;
+    }
+    .app {
+      height: 100dvh;
+    }
+    .main {
+      flex-direction: row;
+    }
+    .left {
+      width: 42%;
+      max-height: none;
+      height: 100%;
+    }
+    .left-scroll {
+      overflow-y: auto;
+    }
+    .right {
+      flex: 1;
+      height: auto;
+      min-height: 0;
+    }
+    .title-bar-controls button {
+      display: none;
+    }
+  }
+.lst{flex:1;overflow:auto;background:var(--sunken-bg);border:2px inset var(--border-mid);min-height:120px;margin:4px 0}
+.ri{display:flex;gap:6px;align-items:center;padding:2px 4px;border-bottom:1px solid var(--border-mid);cursor:pointer}
+.ri:hover{background:var(--hover-bg);color:var(--hover-text)}.ri.sel{background:var(--accent);color:var(--accent-text)}
+.ri .n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ri .s{opacity:.8;font-size:11px}
+.fld{display:flex;gap:6px;align-items:center;margin:4px 0}.fld>label{width:95px;flex-shrink:0}
+.fld input:not([type=file]),.fld select,.fld textarea{flex:1;min-width:0}
+.adv{border:1px solid var(--border-mid);padding:4px 8px;margin-top:6px}.adv summary{font-weight:bold;cursor:pointer}
+</style>
+</head>
+<body data-theme="90s">
+<div class="app">
+  <div class="title-bar">
+    <div class="title-bar-text">
+      <span class="title-bar-icon">📁</span>
+      <span data-i18n="appTitle">Snap2HTML Tools Filter &amp; Extractor</span>
+      <span class="version-badge" id="versionBadge" title="Tool version">v15</span>
+    </div>
+    <div class="title-bar-controls">
+      <span title="Language" style="font-size:14px; line-height:1;">🌐</span>
+      <select id="langSelect" class="theme-select" title="Interface language" style="max-width:130px;">
+        <option value="en">English</option>
+        <option value="ar">العربية</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+        <option value="es">Español</option>
+        <option value="tr">Türkçe</option>
+        <option value="pt">Português</option>
+        <option value="ru">Русский</option>
+        <option value="zh">中文</option>
+        <option value="ja">日本語</option>
+        <option value="ko">한국어</option>
+        <option value="hi">हिन्दी</option>
+      </select>
+      <label data-i18n="theme" style="font-weight:normal; font-size:11px; opacity:0.95;">Theme</label>
+      <select id="themeSelect" class="theme-select" title="Choose decade theme">
+        <option value="70s">1970s</option>
+        <option value="80s">1980s</option>
+        <option value="90s" selected>1990s</option>
+        <option value="2000s">2000s</option>
+        <option value="2010s">2010s</option>
+        <option value="2020s">2020s</option>
+        <option value="2030">2030</option>
+        <option value="2040s">2040s</option>
+        <option value="2050s">2050s</option>
+      </select>
+      <button type="button">_</button>
+      <button type="button">□</button>
+      <button type="button">×</button>
+    </div>
+  </div>
+
+  <div class="tool-tabs" id="toolTabs">
+    <button type="button" class="tool-tab active" data-tool="filter" id="tabFilter">Filter &amp; Extractor</button>
+    <button type="button" class="tool-tab" data-tool="clone" id="tabClone">Snap2HTML Clone</button>
+    <button type="button" class="tool-tab" data-tool="enhance" id="tabEnhance">Enhance Data</button>
+    <button type="button" class="tool-tab" data-tool="merge" id="tabMerge">Merge &amp; Compare</button>
+<button type="button" class="tool-tab" data-tool="final" id="tabFinal">Finalizer</button><button type="button" class="tool-tab" data-tool="group" id="tabGroup">Grouper</button>
+  </div>
+
+  <div class="main" id="panelFilter">
+    <!-- ========== LEFT ========== -->
+    <div class="left">
+      <div class="left-scroll">
+
+        <!-- 1 Load -->
+        <details class="section collapsible-sec" open>
+          <summary class="section-title"><span class="num">1</span> <span data-i18n="secLoad">Load Snap2HTML</span></summary>
+          <input type="file" id="fileInput" accept=".html,.htm,text/html" multiple style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;z-index:-1;">
+          <label class="drop-zone" id="dropZone" for="fileInput">
+            <div class="drop-text" data-i18n-html="dropHint"><strong>Click</strong> or <strong>drop</strong> one or more .html files</div>
+            <div class="file-info" id="fileInfo"></div>
+          </label>
+          <div class="row" style="margin-top:6px;">
+            <button class="btn btn-primary" type="button" id="btnBrowseFile">📂 Browse files…</button>
+          </div>
+          <div class="loading" id="loadLoading">
+            <div class="loading-spinner" aria-hidden="true"></div>
+            <span class="loading-text" data-i18n="parsing">Reading &amp; parsing…</span>
+          </div>
+        </details>
+
+        <!-- 2 Extensions + size + search -->
+        <details class="section collapsible-sec" open>
+          <summary class="section-title"><span class="num">2</span> <span data-i18n="secFilters">Filters</span></summary>
+          <div class="ext-grid" id="extGrid"></div>
+          <div class="row">
+            <input type="text" id="customExt" data-i18n-placeholder="phExt" placeholder="Add ext (webm, 7z…)" style="flex:1; min-width:80px;">
+            <button class="btn" id="addExtBtn" type="button" data-i18n="add">Add</button>
+          </div>
+          <div class="preset-row">
+            <button class="btn" type="button" data-preset="video" data-i18n="video">Video</button>
+            <button class="btn" type="button" data-preset="audio" data-i18n="audio">Audio</button>
+            <button class="btn" type="button" data-preset="archive" data-i18n="archive">Archive</button>
+            <button class="btn" type="button" data-preset="all" data-i18n="all">All</button>
+            <button class="btn" type="button" data-preset="clear" data-i18n="clear">Clear</button>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <label data-i18n="minSize">Min size</label>
+            <input type="number" id="minSize" min="0" step="0.01" value="0" style="width:70px;">
+            <span>GB</span>
+          </div>
+          <div class="row">
+            <label data-i18n="searchName">Search name</label>
+          </div>
+          <input type="text" class="search" id="nameSearch" data-i18n-placeholder="phSearch" placeholder="Filter by file name…">
+        </details>
+
+        <!-- 3 Folders -->
+        <details class="section grow collapsible-sec" open>
+          <summary class="section-title"><span class="num">3</span> <span data-i18n="secFolders">Folders</span></summary>
+          <div class="row" style="margin-bottom:4px;">
+            <button class="btn" type="button" id="btnFolderAll" data-i18n="selectAll">Select All</button>
+            <button class="btn" type="button" id="btnFolderNone" data-i18n="selectNone">Select None</button>
+          </div>
+          <div class="folder-list" id="folderList">
+            <div class="empty-state" style="padding:16px;" data-i18n="loadFirst">Load a file first</div>
+          </div>
+        </details>
+
+        <!-- Export options -->
+        <div class="section">
+          <div class="section-title" data-i18n="secExport">Export options</div>
+          <div class="export-opts">
+            <label><input type="checkbox" id="colName" checked disabled> <span data-i18n="colNameReq">Name (required)</span></label>
+            <label><input type="checkbox" id="colExt" checked> <span data-i18n="colExt">Ext</span></label>
+            <label><input type="checkbox" id="colSize" checked> <span data-i18n="colSize">Size</span></label>
+            <label><input type="checkbox" id="colPath" checked> <span data-i18n="colPath">Path</span></label>
+            <label><input type="checkbox" id="colFull" checked> <span data-i18n="colFull">Full path</span></label>
+            <label><input type="checkbox" id="colRelease" checked> <span>Release date</span></label>
+            <label><input type="checkbox" id="colCustomExp" checked> <span>Custom cols</span></label>
+          </div>
+          <div class="row" style="margin-top:6px;">
+            <label data-i18n="paths">Paths</label>
+            <select id="pathMode">
+              <option value="full" data-i18n="pathFull">Full paths</option>
+              <option value="relative" data-i18n="pathRel">Relative (folder\file)</option>
+              <option value="name" data-i18n="pathName">Name only</option>
+            </select>
+          </div>
+          <div class="row" style="margin-top:6px;">
+            <label>Custom column</label>
+            <input type="text" id="customColName" placeholder="e.g. Year / Studio" style="flex:1; min-width:100px;">
+            <button class="btn" type="button" id="btnAddCustomCol">Add</button>
+          </div>
+          <div id="customColList" class="export-opts" style="margin-top:4px;"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========== RIGHT ========== -->
+    <div class="right">
+      <div class="results-toolbar">
+        <div class="stats" id="stats" data-i18n="statsBegin">Load a Snap2HTML file to begin</div>
+        <span class="checked-info" id="checkedInfo">0 checked · 0.00 GB</span>
+      </div>
+      <div class="row" style="margin-bottom:4px; flex-shrink:0;">
+        <button class="btn" type="button" id="btnSelectAll" data-i18n="selectAllChk">☑ Select All</button>
+        <button class="btn" type="button" id="btnSelectNone" data-i18n="selectNoneChk">☐ Select None</button>
+        <button class="btn" type="button" id="btnInvert" data-i18n="invert">⇅ Invert</button>
+      </div>
+
+      <div class="table-wrap" id="filterTableWrap">
+        <table id="filterTable">
+          <thead>
+            <tr id="filterHeaderRow">
+              <th class="col-check no-sort"><input type="checkbox" id="headerCheck" title="Select all"></th>
+              <th class="col-num no-sort">#</th>
+              <th data-sort="name" data-i18n="colName" style="width:280px;">Name</th>
+              <th data-sort="ext" class="col-ext" data-i18n="colExt" style="width:55px;">Ext</th>
+              <th data-sort="size" class="col-size" data-i18n="colSize" style="width:90px; text-align:right;">Size</th>
+              <th data-sort="path" class="col-path" data-i18n="colPath" style="width:260px;">Path</th>
+              <th data-sort="release" class="col-date" style="width:100px;">Release</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <tr><td colspan="7" class="empty-state" data-i18n="noData">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btnTxt" disabled data-i18n="exportTxt">📄 Export TXT</button>
+        <button class="btn btn-primary" id="btnExcel" disabled data-i18n="exportCsv">📊 Export CSV</button>
+        <button class="btn" id="btnCopy" disabled data-i18n="copy">📋 Copy</button>
+        <button class="btn" type="button" id="btnCopyLogs" title="Copy / download debug logs">📋 Logs</button>
+      </div>
+      <details class="log-panel" id="logPanel" style="margin-top:6px; font-size:11px;">
+        <summary style="cursor:pointer; font-weight:bold;">Debug logs</summary>
+        <pre id="logView" style="max-height:140px; overflow:auto; margin:4px 0 0; padding:6px; background:var(--sunken-bg); white-space:pre-wrap; word-break:break-all;"></pre>
+      </details>
+    </div>
+  </div>
+
+  <!-- ========== ENHANCE DATA PANEL ========== -->
+  <div class="panel-full panel-hidden" id="panelEnhance">
+    <div class="section" style="flex-shrink:0;">
+      <div class="section-title"><span class="num">✨</span> Enhance Data</div>
+      <p class="clone-note" style="margin:0 0 8px;">
+        Upload a TXT or CSV exported from this tool (must include a <strong>Name</strong> column).
+        Columns are detected automatically. Edit any cell, then re-export.
+      </p>
+      <div class="row">
+        <input type="file" id="enhanceFile" accept=".txt,.csv,.tsv,text/plain,text/csv,*/*" style="display:none">
+        <button class="btn btn-primary" type="button" id="btnEnhanceBrowse">📂 Load TXT / CSV…</button>
+        <span id="enhanceFileInfo" class="sunken" style="display:none;"></span>
+        <button class="btn" type="button" id="btnEnhanceSelectAll">☑ Select All</button>
+        <button class="btn" type="button" id="btnEnhanceSelectNone">☐ None</button>
+        <button class="btn btn-primary" type="button" id="btnEnhanceTxt" disabled>📄 Export TXT</button>
+        <button class="btn btn-primary" type="button" id="btnEnhanceCsv" disabled>📊 Export CSV</button>
+      </div>
+      <div class="loading" id="enhanceLoading">
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <span class="loading-text">Reading file…</span>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="enhanceTable">
+        <thead><tr id="enhanceHead"></tr></thead>
+        <tbody id="enhanceBody">
+          <tr><td class="empty-state">Load an exported list to edit</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== MERGE & COMPARE PANEL ========== -->
+  <div class="main panel-hidden" id="panelGroup">
+ <div class="left"><div class="section grow" style="min-height:0">
+  <div class="section-title"><span class="num">1</span> Ungrouped items</div>
+  <div class="row"><button class="btn btn-primary" type="button" id="gLoad">📂 Load HTML / TXT / CSV / session…</button></div>
+  <input type="file" id="gFile" multiple accept=".html,.htm,.txt,.csv,.json" style="display:none">
+  <input type="text" class="search" id="gSearch" placeholder="Search name / path…">
+  <div class="row"><button class="btn" type="button" id="gAll">☑ All shown</button><button class="btn" type="button" id="gNone">☐ None</button><button class="btn btn-primary" type="button" id="gDo">➡ Group selected</button></div>
+  <div class="lst" id="gList"></div><div id="gInfo"></div></div></div>
+ <div class="right"><div class="section-title"><span class="num">2</span> Groups (each = one item in the export)</div>
+  <div class="lst" id="gGroups"></div>
+  <div class="row"><button class="btn" type="button" id="gSave">💾 Save session</button><button class="btn" type="button" id="gTxt">📄 Export TXT</button><button class="btn" type="button" id="gCsv">📊 Export CSV</button><button class="btn btn-primary" type="button" id="gToFin">➡ Send to Finalizer</button></div></div></div>
+<div class="main panel-hidden" id="panelFinal">
+ <div class="left"><div class="section grow" style="min-height:0">
+  <div class="section-title"><span class="num">1</span> Items <span id="fProg" style="margin-left:auto;font-weight:normal"></span></div>
+  <div class="row"><button class="btn btn-primary" type="button" id="fLoad">📂 Load HTML / TXT / CSV / project…</button></div>
+  <input type="file" id="fFile" multiple accept=".html,.htm,.txt,.csv,.json" style="display:none">
+  <input type="text" class="search" id="fSearch" placeholder="Search…">
+  <div class="row"><button class="btn" type="button" id="fAll">☑ All</button><button class="btn" type="button" id="fNone">☐ None</button><button class="btn" type="button" id="fPrev">◀</button><button class="btn" type="button" id="fNext">▶</button></div>
+  <div class="lst" id="fList"></div></div></div>
+ <div class="right"><div class="section-title"><span class="num">2</span> Item details</div>
+  <div id="fForm" style="flex:1;overflow:auto"><div class="empty-state">Select an item from the list</div></div>
+  <div class="row"><button class="btn" type="button" id="fSave">💾 Save project</button><button class="btn btn-primary" type="button" id="fBuild">✅ Finalize &amp; Build Library</button></div></div></div>
+
+<div class="panel-full panel-hidden" id="panelMerge">
+    <div class="section" style="flex-shrink:0;">
+      <div class="section-title"><span class="num">🔀</span> Merge &amp; Compare</div>
+      <p class="clone-note" style="margin:0 0 8px;">
+        Load two lists exported from this tool. Choose a sort column (e.g. year/release).
+        Rows missing that value appear in the bottom section. Select rows from either side, then merge &amp; export.
+      </p>
+      <div class="row">
+        <button class="btn btn-primary" type="button" id="btnMergeA">📂 File A…</button>
+        <span id="mergeInfoA" class="sunken">No file A</span>
+        <button class="btn btn-primary" type="button" id="btnMergeB">📂 File B…</button>
+        <span id="mergeInfoB" class="sunken">No file B</span>
+        <input type="file" id="mergeFileA" accept=".txt,.csv,.tsv,text/plain,text/csv,*/*" style="display:none">
+        <input type="file" id="mergeFileB" accept=".txt,.csv,.tsv,text/plain,text/csv,*/*" style="display:none">
+      </div>
+      <div class="row" style="margin-top:6px;">
+        <label>Sort by</label>
+        <select id="mergeSortCol" style="min-width:120px;"><option value="">—</option></select>
+        <button class="btn" type="button" id="btnMergeCompare" disabled>Compare</button>
+        <button class="btn btn-primary" type="button" id="btnMergeExportTxt" disabled>📄 Merge → TXT</button>
+        <button class="btn btn-primary" type="button" id="btnMergeExportCsv" disabled>📊 Merge → CSV</button>
+      </div>
+      <div class="loading" id="mergeLoading">
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <span class="loading-text" id="mergeLoadingText">Reading file…</span>
+      </div>
+    </div>
+    <div class="merge-grid">
+      <div class="merge-side">
+        <h3>File A</h3>
+        <div class="table-wrap" style="flex:1;">
+          <table id="mergeTableA"><thead id="mergeHeadA"></thead><tbody id="mergeBodyA"><tr><td class="empty-state">—</td></tr></tbody></table>
+        </div>
+      </div>
+      <div class="merge-side">
+        <h3>File B</h3>
+        <div class="table-wrap" style="flex:1;">
+          <table id="mergeTableB"><thead id="mergeHeadB"></thead><tbody id="mergeBodyB"><tr><td class="empty-state">—</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class="merge-missing">
+      <strong>Missing sort value</strong> (no year/field on row) — sorted by name
+      <div class="table-wrap" style="max-height:160px; margin-top:4px;">
+        <table id="mergeTableMiss"><thead id="mergeHeadMiss"></thead><tbody id="mergeBodyMiss"><tr><td class="empty-state">—</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CLONE PANEL ========== -->
+  <div class="clone-wrap panel-hidden" id="panelClone">
+    <div class="clone-desktop-only" id="cloneMobileMsg" style="display:none;">
+      <div class="clone-card" style="text-align:center; padding:24px 16px;">
+        <div style="font-size:28px; margin-bottom:8px;">💻</div>
+        <div class="section-title" style="justify-content:center;">Snap2HTML Clone</div>
+        <p class="clone-note" style="font-size:13px; margin-top:10px;">
+          <strong>This feature is available on desktop only.</strong><br>
+          Folder scanning needs a desktop browser.
+        </p>
+        <p class="clone-note">هذي الميزة فقط للكمبيوتر (ديسكتوب)، ليست متوفرة على الموبايل.</p>
+      </div>
+    </div>
+    <div class="clone-desktop-ui" id="cloneDesktopUi">
+      <div class="clone-card">
+        <div class="section-title"><span class="num">📷</span> Snap2HTML Clone</div>
+        <p class="clone-note" id="cloneNote">
+          Browsers cannot read a typed path like <code>G:\</code> for security reasons.
+          Select a folder below — the tool scans it and builds an HTML snapshot in Snap2HTML-compatible format.
+        </p>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn btn-primary" type="button" id="btnPickFolder">📂 Choose folder…</button>
+          <input type="file" id="folderInput" webkitdirectory directory multiple style="display:none">
+        </div>
+        <div class="clone-stats" id="cloneStats" style="display:none;"></div>
+        <div class="row" style="margin-top:10px;">
+          <label>Title</label>
+          <input type="text" id="cloneTitle" placeholder="Snapshot of …" style="flex:1; min-width:160px;">
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <button class="btn btn-primary" type="button" id="btnGenerateSnap" disabled>⬇ Generate HTML snapshot</button>
+        </div>
+        <p class="clone-note">
+          Output is compatible with <strong>Filter &amp; Extractor</strong>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-bar" id="statusBar">
+    <div class="status-left">
+      <span id="statusText" data-i18n="ready">Ready</span>
+    </div>
+    <div class="status-credit">
+      <span id="statusVersion">v14</span>
+      ·
+      <span data-i18n="designBy">Design by</span>
+      <strong>Eng. Hussein Al-Haj Ali</strong>
+      ·
+      <a class="wa-link" href="https://wa.me/966546109301" target="_blank" rel="noopener noreferrer" title="WhatsApp">
+        💬 +966 54 610 9301
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // Bump this number on every released tool update
+  var TOOL_VERSION = 15;
+  var customColumns = []; // user-defined extra column names
+
+  // ---- helpers ----
+  var appLogs = [];
+  function appLog(msg, isErr) {
+    var line = '[' + new Date().toISOString() + '] ' + (isErr ? 'ERR ' : 'INF ') + msg;
+    appLogs.push(line);
+    if (appLogs.length > 500) appLogs.shift();
+    try { if (isErr) console.error(msg); else console.log(msg); } catch (e) {}
+    var el = document.getElementById('logView');
+    if (el) { el.textContent = appLogs.join('\n'); el.scrollTop = el.scrollHeight; }
+  }
+
+  function base36ToDec(str) {
+    if (!str) return 0;
+    return parseInt(String(str).toUpperCase(), 36) || 0;
+  }
+
+  /** Always prefer GB for display (e.g. 0.12 GB) when >= 0.01 GB, else MB/KB */
+  function formatSize(bytes) {
+    if (!bytes || bytes <= 0) return '0 GB';
+    var gb = bytes / (1024 * 1024 * 1024);
+    if (gb >= 0.01) return gb.toFixed(2) + ' GB';
+    var mb = bytes / (1024 * 1024);
+    if (mb >= 0.01) return mb.toFixed(2) + ' MB';
+    var kb = bytes / 1024;
+    if (kb >= 1) return kb.toFixed(1) + ' KB';
+    return bytes + ' B';
+  }
+
+  function getExt(name) {
+    var i = String(name || '').lastIndexOf('.');
+    if (i < 0 || i === name.length - 1) return '';
+    return name.slice(i + 1).toLowerCase();
+  }
+
+  /** Base name without extension — used everywhere as the Name field */
+  function stripExt(name) {
+    name = String(name || '');
+    var i = name.lastIndexOf('.');
+    if (i <= 0) return name;
+    var ext = name.slice(i + 1);
+    if (/^[A-Za-z0-9]{1,8}$/.test(ext)) return name.slice(0, i);
+    return name;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ---- state ----
+  var allFiles = [];
+  var filtered = [];
+  var checkedMap = new Map();   // fullPath -> bool
+  var folderChecked = new Map(); // folder path -> bool
+  var sortKey = 'size';
+  var sortDir = 'desc';
+
+  var COMMON_EXTS = [
+    'mkv','mp4','avi','mov','wmv','flv','webm','m4v','ts','mpg','mpeg',
+    'mp3','flac','wav','aac','ogg','m4a','wma',
+    'zip','rar','7z','tar','gz','iso',
+    'pdf','epub','cbz','cbr',
+    'jpg','jpeg','png','gif','webp',
+    'exe','msi','apk'
+  ];
+
+  // ---- DOM ----
+  var dropZone = document.getElementById('dropZone');
+  var fileInput = document.getElementById('fileInput');
+  var fileInfo = document.getElementById('fileInfo');
+  var loadLoading = document.getElementById('loadLoading');
+  var extGrid = document.getElementById('extGrid');
+  var customExt = document.getElementById('customExt');
+  var minSizeInput = document.getElementById('minSize');
+  var nameSearch = document.getElementById('nameSearch');
+  var folderList = document.getElementById('folderList');
+  var resultsBody = document.getElementById('resultsBody');
+  var stats = document.getElementById('stats');
+  var checkedInfo = document.getElementById('checkedInfo');
+  var headerCheck = document.getElementById('headerCheck');
+  var btnTxt = document.getElementById('btnTxt');
+  var btnExcel = document.getElementById('btnExcel');
+  var btnCopy = document.getElementById('btnCopy');
+  var statusText = document.getElementById('statusText');
+  var pathMode = document.getElementById('pathMode');
+
+  // ---- i18n ----
+  var RTL_LANGS = { ar: true };
+  var I18N = {
+    en: {
+      appTitle: 'Snap2HTML Tools Filter & Extractor', theme: 'Theme',
+      secLoad: 'Load Snap2HTML', dropHint: '<strong>Click</strong> or <strong>drop</strong> one or more .html files',
+      parsing: 'Parsing…', secFilters: 'Filters', phExt: 'Add ext (webm, 7z…)', add: 'Add',
+      video: 'Video', audio: 'Audio', archive: 'Archive', all: 'All', clear: 'Clear',
+      minSize: 'Min size', searchName: 'Search name', phSearch: 'Filter by file name…',
+      secFolders: 'Folders', selectAll: 'Select All', selectNone: 'Select None', loadFirst: 'Load a file first',
+      secExport: 'Export options', colNameReq: 'Name (required)', colExt: 'Ext', colSize: 'Size',
+      colPath: 'Path', colFull: 'Full path', paths: 'Paths', pathFull: 'Full paths',
+      pathRel: 'Relative (folder\\file)', pathName: 'Name only',
+      statsBegin: 'Load a Snap2HTML file to begin', selectAllChk: '☑ Select All', selectNoneChk: '☐ Select None',
+      invert: '⇅ Invert', colName: 'Name', noData: 'No data yet',
+      exportTxt: '📄 Export TXT', exportCsv: '📊 Export CSV', copy: '📋 Copy',
+      ready: 'Ready', designBy: 'Design by', checked: 'checked', match: 'match',
+      noMatch: 'No files match filters', noMatching: 'No matching files',
+      loadFirstShort: 'Load a file first', foldersEmpty: 'No folders',
+      exportedTxt: 'Exported {n} items to TXT', exportedCsv: 'Exported {n} items to CSV',
+      copied: 'Copied {n} paths', clipboardDenied: 'Clipboard denied',
+      pleaseSelect: 'Please select Snap2HTML .html file(s)',
+      loaded: 'Loaded {n} files from {s} snapshot(s)', themeSet: 'Theme: {t}',
+      filesTotal: 'file(s)', selectHtml: 'Please select a Snap2HTML .html file'
+    },
+    ar: {
+      appTitle: 'مصفّي ومستخرج Snap2HTML Tools', theme: 'المظهر',
+      secLoad: 'تحميل Snap2HTML', dropHint: '<strong>انقر</strong> أو <strong>أسقط</strong> ملف HTML واحد أو أكثر',
+      parsing: 'جاري التحليل…', secFilters: 'الفلاتر (اللاحقة)', phExt: 'أضف امتداداً (webm, 7z…)', add: 'إضافة',
+      video: 'فيديو', audio: 'صوت', archive: 'أرشيف', all: 'الكل', clear: 'مسح',
+      minSize: 'الحد الأدنى للحجم', searchName: 'بحث بالاسم', phSearch: 'تصفية باسم الملف…',
+      secFolders: 'المجلدات', selectAll: 'تحديد الكل', selectNone: 'إلغاء التحديد', loadFirst: 'حمّل ملفاً أولاً',
+      secExport: 'خيارات التصدير', colNameReq: 'الاسم (إلزامي)', colExt: 'الامتداد', colSize: 'الحجم',
+      colPath: 'المسار', colFull: 'المسار الكامل', paths: 'المسارات', pathFull: 'مسارات كاملة',
+      pathRel: 'نسبي (مجلد\\ملف)', pathName: 'الاسم فقط',
+      statsBegin: 'حمّل ملف Snap2HTML للبدء', selectAllChk: '☑ تحديد الكل', selectNoneChk: '☐ إلغاء التحديد',
+      invert: '⇅ عكس', colName: 'الاسم', noData: 'لا بيانات بعد',
+      exportTxt: '📄 تصدير TXT', exportCsv: '📊 تصدير CSV', copy: '📋 نسخ',
+      ready: 'جاهز', designBy: 'تصميم', checked: 'محدد', match: 'مطابق',
+      noMatch: 'لا ملفات تطابق الفلاتر', noMatching: 'لا ملفات مطابقة',
+      loadFirstShort: 'حمّل ملفاً أولاً', foldersEmpty: 'لا مجلدات',
+      exportedTxt: 'تم تصدير {n} عنصر إلى TXT', exportedCsv: 'تم تصدير {n} عنصر إلى CSV',
+      copied: 'تم نسخ {n} مسار', clipboardDenied: 'رفض الحافظة',
+      pleaseSelect: 'يرجى اختيار ملف/ملفات Snap2HTML',
+      loaded: 'تم تحميل {n} ملف من {s} لقطة', themeSet: 'المظهر: {t}',
+      filesTotal: 'ملف/ملفات', selectHtml: 'يرجى اختيار ملف Snap2HTML'
+    },
+    fr: {
+      appTitle: 'Filtre & Extracteur Snap2HTML Tools', theme: 'Thème',
+      secLoad: 'Charger Snap2HTML', dropHint: '<strong>Cliquez</strong> ou <strong>déposez</strong> un ou plusieurs fichiers .html',
+      parsing: 'Analyse…', secFilters: 'Filtres', phExt: 'Ajouter ext (webm, 7z…)', add: 'Ajouter',
+      video: 'Vidéo', audio: 'Audio', archive: 'Archive', all: 'Tout', clear: 'Effacer',
+      minSize: 'Taille min', searchName: 'Rechercher nom', phSearch: 'Filtrer par nom…',
+      secFolders: 'Dossiers', selectAll: 'Tout sélectionner', selectNone: 'Tout désélectionner', loadFirst: 'Chargez un fichier d’abord',
+      secExport: 'Options d’export', colNameReq: 'Nom (obligatoire)', colExt: 'Ext', colSize: 'Taille',
+      colPath: 'Chemin', colFull: 'Chemin complet', paths: 'Chemins', pathFull: 'Chemins complets',
+      pathRel: 'Relatif (dossier\\fichier)', pathName: 'Nom seul',
+      statsBegin: 'Chargez un fichier Snap2HTML pour commencer', selectAllChk: '☑ Tout sélectionner', selectNoneChk: '☐ Tout désélectionner',
+      invert: '⇅ Inverser', colName: 'Nom', noData: 'Pas encore de données',
+      exportTxt: '📄 Exporter TXT', exportCsv: '📊 Exporter CSV', copy: '📋 Copier',
+      ready: 'Prêt', designBy: 'Conçu par', checked: 'sélectionné(s)', match: 'correspondance(s)',
+      noMatch: 'Aucun fichier ne correspond', noMatching: 'Aucun fichier correspondant',
+      loadFirstShort: 'Chargez un fichier d’abord', foldersEmpty: 'Aucun dossier',
+      exportedTxt: '{n} éléments exportés en TXT', exportedCsv: '{n} éléments exportés en CSV',
+      copied: '{n} chemins copiés', clipboardDenied: 'Presse-papiers refusé',
+      pleaseSelect: 'Sélectionnez un/des fichier(s) Snap2HTML',
+      loaded: '{n} fichiers chargés depuis {s} instantané(s)', themeSet: 'Thème : {t}',
+      filesTotal: 'fichier(s)', selectHtml: 'Sélectionnez un fichier Snap2HTML'
+    },
+    de: {
+      appTitle: 'Snap2HTML Tools Filter & Extraktor', theme: 'Design',
+      secLoad: 'Snap2HTML laden', dropHint: '<strong>Klicken</strong> oder <strong>ablegen</strong> einer oder mehrerer .html-Dateien',
+      parsing: 'Analysiere…', secFilters: 'Filter', phExt: 'Erw. hinzufügen (webm, 7z…)', add: 'Hinzufügen',
+      video: 'Video', audio: 'Audio', archive: 'Archiv', all: 'Alle', clear: 'Leeren',
+      minSize: 'Min. Größe', searchName: 'Name suchen', phSearch: 'Nach Dateiname filtern…',
+      secFolders: 'Ordner', selectAll: 'Alle auswählen', selectNone: 'Keine', loadFirst: 'Zuerst eine Datei laden',
+      secExport: 'Exportoptionen', colNameReq: 'Name (erforderlich)', colExt: 'Erw.', colSize: 'Größe',
+      colPath: 'Pfad', colFull: 'Vollständiger Pfad', paths: 'Pfade', pathFull: 'Vollständige Pfade',
+      pathRel: 'Relativ (Ordner\\Datei)', pathName: 'Nur Name',
+      statsBegin: 'Snap2HTML-Datei laden zum Starten', selectAllChk: '☑ Alle', selectNoneChk: '☐ Keine',
+      invert: '⇅ Umkehren', colName: 'Name', noData: 'Noch keine Daten',
+      exportTxt: '📄 TXT exportieren', exportCsv: '📊 CSV exportieren', copy: '📋 Kopieren',
+      ready: 'Bereit', designBy: 'Design von', checked: 'ausgewählt', match: 'Treffer',
+      noMatch: 'Keine Dateien passen', noMatching: 'Keine passenden Dateien',
+      loadFirstShort: 'Zuerst Datei laden', foldersEmpty: 'Keine Ordner',
+      exportedTxt: '{n} Einträge als TXT exportiert', exportedCsv: '{n} Einträge als CSV exportiert',
+      copied: '{n} Pfade kopiert', clipboardDenied: 'Zwischenablage verweigert',
+      pleaseSelect: 'Bitte Snap2HTML-.html-Datei(en) wählen',
+      loaded: '{n} Dateien aus {s} Snapshot(s) geladen', themeSet: 'Design: {t}',
+      filesTotal: 'Datei(en)', selectHtml: 'Bitte Snap2HTML-Datei wählen'
+    },
+    es: {
+      appTitle: 'Filtro y Extractor Snap2HTML Tools', theme: 'Tema',
+      secLoad: 'Cargar Snap2HTML', dropHint: '<strong>Clic</strong> o <strong>suelte</strong> uno o más archivos .html',
+      parsing: 'Analizando…', secFilters: 'Filtros', phExt: 'Añadir ext (webm, 7z…)', add: 'Añadir',
+      video: 'Vídeo', audio: 'Audio', archive: 'Archivo', all: 'Todo', clear: 'Limpiar',
+      minSize: 'Tamaño mín.', searchName: 'Buscar nombre', phSearch: 'Filtrar por nombre…',
+      secFolders: 'Carpetas', selectAll: 'Seleccionar todo', selectNone: 'Ninguno', loadFirst: 'Cargue un archivo primero',
+      secExport: 'Opciones de exportación', colNameReq: 'Nombre (obligatorio)', colExt: 'Ext', colSize: 'Tamaño',
+      colPath: 'Ruta', colFull: 'Ruta completa', paths: 'Rutas', pathFull: 'Rutas completas',
+      pathRel: 'Relativa (carpeta\\archivo)', pathName: 'Solo nombre',
+      statsBegin: 'Cargue un Snap2HTML para empezar', selectAllChk: '☑ Todo', selectNoneChk: '☐ Ninguno',
+      invert: '⇅ Invertir', colName: 'Nombre', noData: 'Sin datos aún',
+      exportTxt: '📄 Exportar TXT', exportCsv: '📊 Exportar CSV', copy: '📋 Copiar',
+      ready: 'Listo', designBy: 'Diseño de', checked: 'seleccionados', match: 'coincidencias',
+      noMatch: 'Ningún archivo coincide', noMatching: 'Sin archivos coincidentes',
+      loadFirstShort: 'Cargue un archivo primero', foldersEmpty: 'Sin carpetas',
+      exportedTxt: 'Exportados {n} elementos a TXT', exportedCsv: 'Exportados {n} elementos a CSV',
+      copied: 'Copiadas {n} rutas', clipboardDenied: 'Portapapeles denegado',
+      pleaseSelect: 'Seleccione archivo(s) Snap2HTML',
+      loaded: 'Cargados {n} archivos de {s} instantánea(s)', themeSet: 'Tema: {t}',
+      filesTotal: 'archivo(s)', selectHtml: 'Seleccione un archivo Snap2HTML'
+    },
+    tr: {
+      appTitle: 'Snap2HTML Tools Filtre & Çıkarıcı', theme: 'Tema',
+      secLoad: 'Snap2HTML yükle', dropHint: 'Bir veya daha fazla .html dosyasını <strong>tıklayın</strong> veya <strong>bırakın</strong>',
+      parsing: 'Ayrıştırılıyor…', secFilters: 'Filtreler', phExt: 'Uzantı ekle (webm, 7z…)', add: 'Ekle',
+      video: 'Video', audio: 'Ses', archive: 'Arşiv', all: 'Tümü', clear: 'Temizle',
+      minSize: 'Min. boyut', searchName: 'Ad ara', phSearch: 'Dosya adına göre filtrele…',
+      secFolders: 'Klasörler', selectAll: 'Tümünü seç', selectNone: 'Hiçbiri', loadFirst: 'Önce bir dosya yükleyin',
+      secExport: 'Dışa aktarma', colNameReq: 'Ad (zorunlu)', colExt: 'Uz.', colSize: 'Boyut',
+      colPath: 'Yol', colFull: 'Tam yol', paths: 'Yollar', pathFull: 'Tam yollar',
+      pathRel: 'Göreli (klasör\\dosya)', pathName: 'Yalnızca ad',
+      statsBegin: 'Başlamak için Snap2HTML yükleyin', selectAllChk: '☑ Tümü', selectNoneChk: '☐ Hiçbiri',
+      invert: '⇅ Ters çevir', colName: 'Ad', noData: 'Henüz veri yok',
+      exportTxt: '📄 TXT dışa aktar', exportCsv: '📊 CSV dışa aktar', copy: '📋 Kopyala',
+      ready: 'Hazır', designBy: 'Tasarım', checked: 'seçili', match: 'eş',
+      noMatch: 'Eşleşen dosya yok', noMatching: 'Eşleşen dosya yok',
+      loadFirstShort: 'Önce dosya yükleyin', foldersEmpty: 'Klasör yok',
+      exportedTxt: '{n} öğe TXT olarak aktarıldı', exportedCsv: '{n} öğe CSV olarak aktarıldı',
+      copied: '{n} yol kopyalandı', clipboardDenied: 'Pano reddedildi',
+      pleaseSelect: 'Snap2HTML .html dosyası seçin',
+      loaded: '{s} anlık görüntüden {n} dosya yüklendi', themeSet: 'Tema: {t}',
+      filesTotal: 'dosya', selectHtml: 'Snap2HTML dosyası seçin'
+    },
+    pt: {
+      appTitle: 'Filtro e Extrator Snap2HTML Tools', theme: 'Tema',
+      secLoad: 'Carregar Snap2HTML', dropHint: '<strong>Clique</strong> ou <strong>solte</strong> um ou mais arquivos .html',
+      parsing: 'Analisando…', secFilters: 'Filtros', phExt: 'Adicionar ext (webm, 7z…)', add: 'Adicionar',
+      video: 'Vídeo', audio: 'Áudio', archive: 'Arquivo', all: 'Todos', clear: 'Limpar',
+      minSize: 'Tamanho mín.', searchName: 'Buscar nome', phSearch: 'Filtrar por nome…',
+      secFolders: 'Pastas', selectAll: 'Selecionar tudo', selectNone: 'Nenhum', loadFirst: 'Carregue um arquivo primeiro',
+      secExport: 'Opções de exportação', colNameReq: 'Nome (obrigatório)', colExt: 'Ext', colSize: 'Tamanho',
+      colPath: 'Caminho', colFull: 'Caminho completo', paths: 'Caminhos', pathFull: 'Caminhos completos',
+      pathRel: 'Relativo (pasta\\arquivo)', pathName: 'Só nome',
+      statsBegin: 'Carregue um Snap2HTML para começar', selectAllChk: '☑ Tudo', selectNoneChk: '☐ Nenhum',
+      invert: '⇅ Inverter', colName: 'Nome', noData: 'Sem dados ainda',
+      exportTxt: '📄 Exportar TXT', exportCsv: '📊 Exportar CSV', copy: '📋 Copiar',
+      ready: 'Pronto', designBy: 'Design por', checked: 'selecionados', match: 'correspondências',
+      noMatch: 'Nenhum arquivo corresponde', noMatching: 'Sem arquivos correspondentes',
+      loadFirstShort: 'Carregue um arquivo primeiro', foldersEmpty: 'Sem pastas',
+      exportedTxt: 'Exportados {n} itens para TXT', exportedCsv: 'Exportados {n} itens para CSV',
+      copied: 'Copiados {n} caminhos', clipboardDenied: 'Área de transferência negada',
+      pleaseSelect: 'Selecione arquivo(s) Snap2HTML',
+      loaded: 'Carregados {n} arquivos de {s} snapshot(s)', themeSet: 'Tema: {t}',
+      filesTotal: 'arquivo(s)', selectHtml: 'Selecione um arquivo Snap2HTML'
+    },
+    ru: {
+      appTitle: 'Фильтр и экстрактор Snap2HTML Tools', theme: 'Тема',
+      secLoad: 'Загрузить Snap2HTML', dropHint: '<strong>Нажмите</strong> или <strong>перетащите</strong> один или несколько .html',
+      parsing: 'Разбор…', secFilters: 'Фильтры', phExt: 'Добавить расш. (webm, 7z…)', add: 'Добавить',
+      video: 'Видео', audio: 'Аудио', archive: 'Архив', all: 'Все', clear: 'Очистить',
+      minSize: 'Мин. размер', searchName: 'Поиск имени', phSearch: 'Фильтр по имени…',
+      secFolders: 'Папки', selectAll: 'Выбрать все', selectNone: 'Снять', loadFirst: 'Сначала загрузите файл',
+      secExport: 'Параметры экспорта', colNameReq: 'Имя (обязательно)', colExt: 'Расш.', colSize: 'Размер',
+      colPath: 'Путь', colFull: 'Полный путь', paths: 'Пути', pathFull: 'Полные пути',
+      pathRel: 'Относительный (папка\\файл)', pathName: 'Только имя',
+      statsBegin: 'Загрузите Snap2HTML для начала', selectAllChk: '☑ Все', selectNoneChk: '☐ Снять',
+      invert: '⇅ Инверт.', colName: 'Имя', noData: 'Пока нет данных',
+      exportTxt: '📄 Экспорт TXT', exportCsv: '📊 Экспорт CSV', copy: '📋 Копировать',
+      ready: 'Готово', designBy: 'Дизайн', checked: 'выбрано', match: 'совпадений',
+      noMatch: 'Нет подходящих файлов', noMatching: 'Нет совпадений',
+      loadFirstShort: 'Сначала загрузите файл', foldersEmpty: 'Нет папок',
+      exportedTxt: 'Экспортировано {n} в TXT', exportedCsv: 'Экспортировано {n} в CSV',
+      copied: 'Скопировано {n} путей', clipboardDenied: 'Буфер запрещён',
+      pleaseSelect: 'Выберите файл(ы) Snap2HTML',
+      loaded: 'Загружено {n} файлов из {s} снимка(ов)', themeSet: 'Тема: {t}',
+      filesTotal: 'файл(ов)', selectHtml: 'Выберите файл Snap2HTML'
+    },
+    zh: {
+      appTitle: 'Snap2HTML Tools 筛选与导出', theme: '主题',
+      secLoad: '加载 Snap2HTML', dropHint: '<strong>点击</strong>或<strong>拖放</strong>一个或多个 .html 文件',
+      parsing: '解析中…', secFilters: '筛选', phExt: '添加扩展名 (webm, 7z…)', add: '添加',
+      video: '视频', audio: '音频', archive: '压缩包', all: '全部', clear: '清除',
+      minSize: '最小大小', searchName: '搜索文件名', phSearch: '按文件名筛选…',
+      secFolders: '文件夹', selectAll: '全选', selectNone: '全不选', loadFirst: '请先加载文件',
+      secExport: '导出选项', colNameReq: '名称（必填）', colExt: '扩展名', colSize: '大小',
+      colPath: '路径', colFull: '完整路径', paths: '路径', pathFull: '完整路径',
+      pathRel: '相对 (文件夹\\文件)', pathName: '仅名称',
+      statsBegin: '加载 Snap2HTML 文件以开始', selectAllChk: '☑ 全选', selectNoneChk: '☐ 全不选',
+      invert: '⇅ 反选', colName: '名称', noData: '暂无数据',
+      exportTxt: '📄 导出 TXT', exportCsv: '📊 导出 CSV', copy: '📋 复制',
+      ready: '就绪', designBy: '设计', checked: '已选', match: '匹配',
+      noMatch: '没有匹配的文件', noMatching: '没有匹配文件',
+      loadFirstShort: '请先加载文件', foldersEmpty: '无文件夹',
+      exportedTxt: '已导出 {n} 项到 TXT', exportedCsv: '已导出 {n} 项到 CSV',
+      copied: '已复制 {n} 条路径', clipboardDenied: '剪贴板被拒绝',
+      pleaseSelect: '请选择 Snap2HTML .html 文件',
+      loaded: '已从 {s} 个快照加载 {n} 个文件', themeSet: '主题：{t}',
+      filesTotal: '个文件', selectHtml: '请选择 Snap2HTML 文件'
+    },
+    ja: {
+      appTitle: 'Snap2HTML Tools フィルター＆抽出', theme: 'テーマ',
+      secLoad: 'Snap2HTMLを読み込む', dropHint: '.htmlファイルを<strong>クリック</strong>または<strong>ドロップ</strong>',
+      parsing: '解析中…', secFilters: 'フィルター', phExt: '拡張子を追加 (webm, 7z…)', add: '追加',
+      video: '動画', audio: '音声', archive: 'アーカイブ', all: 'すべて', clear: 'クリア',
+      minSize: '最小サイズ', searchName: '名前検索', phSearch: 'ファイル名で絞り込み…',
+      secFolders: 'フォルダ', selectAll: 'すべて選択', selectNone: '選択解除', loadFirst: '先にファイルを読み込んでください',
+      secExport: 'エクスポート設定', colNameReq: '名前（必須）', colExt: '拡張子', colSize: 'サイズ',
+      colPath: 'パス', colFull: 'フルパス', paths: 'パス', pathFull: 'フルパス',
+      pathRel: '相対 (フォルダ\\ファイル)', pathName: '名前のみ',
+      statsBegin: '開始するにはSnap2HTMLを読み込んでください', selectAllChk: '☑ すべて', selectNoneChk: '☐ 解除',
+      invert: '⇅ 反転', colName: '名前', noData: 'データなし',
+      exportTxt: '📄 TXT出力', exportCsv: '📊 CSV出力', copy: '📋 コピー',
+      ready: '準備完了', designBy: 'デザイン', checked: '選択中', match: '件',
+      noMatch: '一致するファイルなし', noMatching: '一致なし',
+      loadFirstShort: '先にファイルを読み込んでください', foldersEmpty: 'フォルダなし',
+      exportedTxt: '{n}件をTXTに出力', exportedCsv: '{n}件をCSVに出力',
+      copied: '{n}件のパスをコピー', clipboardDenied: 'クリップボード拒否',
+      pleaseSelect: 'Snap2HTMLの.htmlを選択してください',
+      loaded: '{s}件のスナップショットから{n}ファイルを読み込み', themeSet: 'テーマ: {t}',
+      filesTotal: 'ファイル', selectHtml: 'Snap2HTMLファイルを選択'
+    },
+    ko: {
+      appTitle: 'Snap2HTML Tools 필터 & 추출', theme: '테마',
+      secLoad: 'Snap2HTML 불러오기', dropHint: '.html 파일을 <strong>클릭</strong>하거나 <strong>드롭</strong>',
+      parsing: '분석 중…', secFilters: '필터', phExt: '확장자 추가 (webm, 7z…)', add: '추가',
+      video: '동영상', audio: '오디오', archive: '압축', all: '전체', clear: '지우기',
+      minSize: '최소 크기', searchName: '이름 검색', phSearch: '파일 이름으로 필터…',
+      secFolders: '폴더', selectAll: '모두 선택', selectNone: '선택 해제', loadFirst: '먼저 파일을 불러오세요',
+      secExport: '내보내기 옵션', colNameReq: '이름 (필수)', colExt: '확장자', colSize: '크기',
+      colPath: '경로', colFull: '전체 경로', paths: '경로', pathFull: '전체 경로',
+      pathRel: '상대 (폴더\\파일)', pathName: '이름만',
+      statsBegin: '시작하려면 Snap2HTML을 불러오세요', selectAllChk: '☑ 모두', selectNoneChk: '☐ 해제',
+      invert: '⇅ 반전', colName: '이름', noData: '데이터 없음',
+      exportTxt: '📄 TXT 내보내기', exportCsv: '📊 CSV 내보내기', copy: '📋 복사',
+      ready: '준비됨', designBy: '디자인', checked: '선택됨', match: '일치',
+      noMatch: '일치하는 파일 없음', noMatching: '일치 없음',
+      loadFirstShort: '먼저 파일을 불러오세요', foldersEmpty: '폴더 없음',
+      exportedTxt: '{n}개를 TXT로 내보냄', exportedCsv: '{n}개를 CSV로 내보냄',
+      copied: '{n}개 경로 복사됨', clipboardDenied: '클립보드 거부됨',
+      pleaseSelect: 'Snap2HTML .html 파일을 선택하세요',
+      loaded: '{s}개 스냅샷에서 {n}개 파일 로드', themeSet: '테마: {t}',
+      filesTotal: '파일', selectHtml: 'Snap2HTML 파일을 선택하세요'
+    },
+    hi: {
+      appTitle: 'Snap2HTML Tools फ़िल्टर और निष्कर्षक', theme: 'थीम',
+      secLoad: 'Snap2HTML लोड करें', dropHint: 'एक या अधिक .html फ़ाइलें <strong>क्लिक</strong> या <strong>ड्रॉप</strong> करें',
+      parsing: 'विश्लेषण…', secFilters: 'फ़िल्टर', phExt: 'एक्सटेंशन जोड़ें (webm, 7z…)', add: 'जोड़ें',
+      video: 'वीडियो', audio: 'ऑडियो', archive: 'आर्काइव', all: 'सभी', clear: 'साफ़',
+      minSize: 'न्यूनतम आकार', searchName: 'नाम खोजें', phSearch: 'फ़ाइल नाम से फ़िल्टर…',
+      secFolders: 'फ़ोल्डर', selectAll: 'सभी चुनें', selectNone: 'कोई नहीं', loadFirst: 'पहले फ़ाइल लोड करें',
+      secExport: 'निर्यात विकल्प', colNameReq: 'नाम (आवश्यक)', colExt: 'एक्सट.', colSize: 'आकार',
+      colPath: 'पथ', colFull: 'पूर्ण पथ', paths: 'पथ', pathFull: 'पूर्ण पथ',
+      pathRel: 'सापेक्ष (फ़ोल्डर\\फ़ाइल)', pathName: 'केवल नाम',
+      statsBegin: 'शुरू करने के लिए Snap2HTML लोड करें', selectAllChk: '☑ सभी', selectNoneChk: '☐ कोई नहीं',
+      invert: '⇅ उल्टा', colName: 'नाम', noData: 'अभी कोई डेटा नहीं',
+      exportTxt: '📄 TXT निर्यात', exportCsv: '📊 CSV निर्यात', copy: '📋 कॉपी',
+      ready: 'तैयार', designBy: 'डिज़ाइन', checked: 'चयनित', match: 'मिलान',
+      noMatch: 'कोई फ़ाइल मेल नहीं खाती', noMatching: 'कोई मिलान नहीं',
+      loadFirstShort: 'पहले फ़ाइल लोड करें', foldersEmpty: 'कोई फ़ोल्डर नहीं',
+      exportedTxt: '{n} आइटम TXT में निर्यात', exportedCsv: '{n} आइटम CSV में निर्यात',
+      copied: '{n} पथ कॉपी हुए', clipboardDenied: 'क्लिपबोर्ड अस्वीकृत',
+      pleaseSelect: 'Snap2HTML .html फ़ाइल चुनें',
+      loaded: '{s} स्नैपशॉट से {n} फ़ाइलें लोड', themeSet: 'थीम: {t}',
+      filesTotal: 'फ़ाइल(ें)', selectHtml: 'Snap2HTML फ़ाइल चुनें'
+    }
+  };
+
+  var currentLang = 'en';
+  function t(key, vars) {
+    var pack = I18N[currentLang] || I18N.en;
+    var s = pack[key] != null ? pack[key] : (I18N.en[key] || key);
+    if (vars) {
+      Object.keys(vars).forEach(function(k) {
+        s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), vars[k]);
+      });
+    }
+    return s;
+  }
+
+  function applyLanguage(lang) {
+    if (!I18N[lang]) lang = 'en';
+    currentLang = lang;
+    var dir = RTL_LANGS[lang] ? 'rtl' : 'ltr';
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('dir', dir);
+    document.body.setAttribute('dir', dir);
+
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (key) el.textContent = t(key);
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-html');
+      if (key) el.innerHTML = t(key);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-placeholder');
+      if (key) el.setAttribute('placeholder', t(key));
+    });
+    // pathMode options
+    var pm = document.getElementById('pathMode');
+    if (pm) {
+      pm.querySelector('option[value="full"]').textContent = t('pathFull');
+      pm.querySelector('option[value="relative"]').textContent = t('pathRel');
+      pm.querySelector('option[value="name"]').textContent = t('pathName');
+    }
+    try { localStorage.setItem('s2h_lang', lang); } catch (e) {}
+    var ls = document.getElementById('langSelect');
+    if (ls && ls.value !== lang) ls.value = lang;
+  }
+
+  // ---- Theme ----
+  var themeSelect = document.getElementById('themeSelect');
+  function applyTheme(name, animate) {
+    if (!name) name = '90s';
+    if (animate) {
+      document.body.classList.remove('theme-switching');
+      void document.body.offsetWidth;
+      document.body.classList.add('theme-switching');
+      setTimeout(function() {
+        document.body.classList.remove('theme-switching');
+      }, 560);
+    }
+    document.body.setAttribute('data-theme', name);
+    document.documentElement.setAttribute('data-theme', name);
+    if (themeSelect && themeSelect.value !== name) themeSelect.value = name;
+    try { localStorage.setItem('s2h_theme', name); } catch (e) {}
+  }
+  try {
+    var savedTheme = localStorage.getItem('s2h_theme') || '90s';
+    applyTheme(savedTheme, false);
+  } catch (e) {
+    applyTheme('90s', false);
+  }
+  if (themeSelect) {
+    themeSelect.addEventListener('change', function() {
+      applyTheme(themeSelect.value, true);
+      setStatus(t('themeSet', { t: themeSelect.options[themeSelect.selectedIndex].text }));
+    });
+  }
+
+  try {
+    var savedLang = localStorage.getItem('s2h_lang') || 'en';
+    applyLanguage(savedLang);
+  } catch (e) {
+    applyLanguage('en');
+  }
+  var langSelect = document.getElementById('langSelect');
+  if (langSelect) {
+    langSelect.addEventListener('change', function() {
+      applyLanguage(langSelect.value);
+      if (typeof applyFilters === 'function') applyFilters();
+    });
+  }
+
+  // ---- localStorage filters ----
+  function saveFilters() {
+    try {
+      var exts = [];
+      extGrid.querySelectorAll('input:checked').forEach(function(cb) { exts.push(cb.value); });
+      localStorage.setItem('s2h_filters', JSON.stringify({
+        exts: exts,
+        minSize: minSizeInput.value || '0'
+      }));
+    } catch (e) {}
+  }
+
+  function loadFilters() {
+    try {
+      var raw = localStorage.getItem('s2h_filters');
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) { return null; }
+  }
+
+  // ---- extensions UI ----
+  function renderExtChips(selected) {
+    if (!selected) selected = new Set();
+    extGrid.innerHTML = '';
+    COMMON_EXTS.forEach(function(ext) {
+      var chip = document.createElement('label');
+      chip.className = 'ext-chip';
+      chip.innerHTML = '<input type="checkbox" value="' + ext + '"' +
+        (selected.has(ext) ? ' checked' : '') + '> .' + ext;
+      chip.querySelector('input').addEventListener('change', function() {
+        saveFilters();
+        applyFilters();
+      });
+      extGrid.appendChild(chip);
+    });
+  }
+
+  var saved = loadFilters();
+  if (saved && saved.exts && saved.exts.length) {
+    renderExtChips(new Set(saved.exts));
+    if (saved.minSize != null) minSizeInput.value = saved.minSize;
+  } else {
+    renderExtChips();
+  }
+
+  document.getElementById('addExtBtn').addEventListener('click', function() {
+    var raw = customExt.value.trim().toLowerCase().replace(/^\./, '');
+    if (!raw) return;
+    var parts = raw.split(/[\s,;]+/).filter(Boolean);
+    parts.forEach(function(ext) {
+      if (COMMON_EXTS.indexOf(ext) < 0) COMMON_EXTS.push(ext);
+    });
+    var cur = getSelectedExts();
+    parts.forEach(function(e) { cur.add(e); });
+    renderExtChips(cur);
+    customExt.value = '';
+    saveFilters();
+    applyFilters();
+  });
+  customExt.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addExtBtn').click(); }
+  });
+
+  document.querySelectorAll('[data-preset]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var p = btn.dataset.preset;
+      var set = new Set();
+      if (p === 'video') set = new Set(['mkv','mp4','avi','mov','wmv','flv','webm','m4v','ts','mpg','mpeg']);
+      else if (p === 'audio') set = new Set(['mp3','flac','wav','aac','ogg','m4a','wma']);
+      else if (p === 'archive') set = new Set(['zip','rar','7z','tar','gz','iso']);
+      else if (p === 'all') set = new Set(COMMON_EXTS);
+      renderExtChips(set);
+      saveFilters();
+      applyFilters();
+    });
+  });
+
+  function getSelectedExts() {
+    var set = new Set();
+    extGrid.querySelectorAll('input:checked').forEach(function(cb) { set.add(cb.value); });
+    return set;
+  }
+
+  // ---- file load (multi) ----
+  function openFilePicker(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    appLog('open file picker');
+    if (!fileInput) { appLog('fileInput missing', true); return; }
+    try { fileInput.value = ''; fileInput.click(); } catch (err) { appLog(err.message, true); }
+  }
+  var btnBrowseFile = document.getElementById('btnBrowseFile');
+  if (btnBrowseFile) btnBrowseFile.addEventListener('click', openFilePicker);
+  if (dropZone) {
+    dropZone.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('dragover'); });
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault(); dropZone.classList.remove('dragover');
+      if (e.dataTransfer && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+    });
+  }
+  if (fileInput) {
+    fileInput.addEventListener('change', function() {
+      appLog('fileInput change count=' + (fileInput.files ? fileInput.files.length : 0));
+      if (fileInput.files && fileInput.files.length) handleFiles(fileInput.files);
+    });
+  }
+  // Keep version labels in sync with TOOL_VERSION
+  (function syncVersionUi() {
+    var label = 'v' + TOOL_VERSION;
+    var badge = document.getElementById('versionBadge');
+    var statusVer = document.getElementById('statusVersion');
+    if (badge) badge.textContent = label;
+    if (statusVer) statusVer.textContent = label;
+    try { document.title = 'Snap2HTML Filter & Extractor ' + label; } catch (e) {}
+    appLog('tool version ' + label);
+  })();
+  appLog('app ready');
+
+  function handleFiles(fileList) {
+    var files = [];
+    for (var i = 0; i < fileList.length; i++) {
+      var f = fileList[i];
+      var n = f.name.toLowerCase();
+      if (n.endsWith('.html') || n.endsWith('.htm')) files.push(f);
+    }
+    if (!files.length) {
+      setStatus(t('pleaseSelect'), true);
+      return;
+    }
+    loadLoading.classList.add('show');
+    dropZone.classList.add('has-file');
+    allFiles = [];
+    checkedMap.clear();
+    folderChecked.clear();
+
+    var pending = files.length;
+    var names = [];
+    files.forEach(function(file) {
+      names.push(file.name);
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          parseSnap2HTML(e.target.result, file.name);
+        } catch (err) {
+          console.error(err);
+          setStatus('Parse error in ' + file.name + ': ' + err.message, true);
+        }
+        pending--;
+        if (pending === 0) {
+          loadLoading.classList.remove('show');
+          fileInfo.style.display = 'block';
+          fileInfo.textContent = names.length + ' ' + t('filesTotal') + ': ' + names.join(', ') +
+            ' — ' + allFiles.length.toLocaleString();
+          setStatus(t('loaded', { n: allFiles.length.toLocaleString(), s: String(names.length) }));
+          applyFilters();
+        }
+      };
+      reader.onerror = function() {
+        pending--;
+        setStatus('Failed to read ' + file.name, true);
+        if (pending === 0) loadLoading.classList.remove('show');
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  /**
+   * Universal Snap2HTML parser — supports all known app versions:
+   *
+   * LEGACY (≈1.9 – 2.14):  D.p([...])
+   *   ["full/path*0*unixDate", "file*DECIMAL_size*date", ..., totalSizeNumber, "childIds*"]
+   *
+   * MODERN dataVersion 2 (2.5 – 2.52+):  p([...]) inside // [SNAPDATA]
+   *   ["name*BASE36_size*BASE36_date", parentId, "childIds*", "file*b36*b36", ...]
+   *   Multi-root: several entries with parentId=-1; optional metadata object at end of root rows
+   *   Folder size "-1" means read error → treat as 0
+   *
+   * Also accepts: bare p([...]) lines, dirs.push([...]), Array.prototype.p alias
+   */
+  function parseSnap2HTML(html, sourceName) {
+    appLog('parse start: ' + (sourceName || '?') + ' size=' + (html ? html.length : 0));
+
+    // Detect advertised version from HTML comments / window.snap
+    var appVer = '';
+    var dataVer = '';
+    var mVer = html.match(/generated by\s+Snap2HTML\s+([\d.]+)/i);
+    if (mVer) appVer = mVer[1];
+    var mDv = html.match(/dataVersion\s*:\s*(\d+)/);
+    if (mDv) dataVer = mDv[1];
+    var mApp = html.match(/appVersion\s*:\s*["']([^"']+)["']/);
+    if (mApp && !appVer) appVer = mApp[1];
+    appLog('detected appVersion=' + (appVer || '?') + ' dataVersion=' + (dataVer || '?'));
+
+    var dirs = [];
+    var format = 'unknown';
+
+    function tryEvalArrayLiteral(src) {
+      try { return (new Function('return (' + src + ')'))(); } catch (e) { return null; }
+    }
+
+    function collectFromRegex(pattern, label) {
+      var re = new RegExp(pattern, 'g');
+      var m, n = 0;
+      while ((m = re.exec(html)) !== null) {
+        var arr = tryEvalArrayLiteral(m[1]);
+        if (arr && Array.isArray(arr)) { dirs.push(arr); n++; }
+      }
+      if (n) appLog(label + ' collected ' + n + ' entries');
+      return n;
+    }
+
+    // --- Extraction strategies (stop when we have data) ---
+
+    // 1) Official modern markers // [SNAPDATA] ... // [/SNAPDATA]
+    var startMarker = '// [SNAPDATA]';
+    var endMarker = '// [/SNAPDATA]';
+    var start = html.indexOf(startMarker);
+    var end = html.indexOf(endMarker);
+    if (start !== -1 && end > start) {
+      var dataCode = html.slice(start + startMarker.length, end).trim();
+      appLog('SNAPDATA block len=' + dataCode.length);
+      try {
+        function p(d) { if (Array.isArray(d)) dirs.push(d); }
+        (new Function('p', dataCode))(p);
+        if (dirs.length) format = 'v2-snapdata';
+      } catch (e) {
+        appLog('SNAPDATA eval failed: ' + e.message, true);
+        dirs = [];
+      }
+    }
+
+    // 2) Bare p([...]) lines (template variants / partial markers)
+    if (!dirs.length) {
+      collectFromRegex('(?:^|[\\s;])p\\s*\\(\\s*(\\[[\\s\\S]*?\\])\\s*\\)', 'p()');
+      if (dirs.length) format = 'v2-p-lines';
+    }
+
+    // 3) Legacy D.p([...])  (v1.9–2.14 style)
+    if (!dirs.length) {
+      collectFromRegex('D\\.p\\s*\\(\\s*(\\[[\\s\\S]*?\\])\\s*\\)', 'D.p()');
+      if (dirs.length) format = 'v1-Dp';
+    }
+
+    // 4) dirs.push([...])
+    if (!dirs.length) {
+      collectFromRegex('dirs\\.push\\s*\\(\\s*(\\[[\\s\\S]*?\\])\\s*\\)', 'dirs.push');
+      if (dirs.length) format = 'dirs-push';
+    }
+
+    // 5) Array.prototype.p = push + D.p / p alias region (eval chunk)
+    if (!dirs.length && (/Array\.prototype\.p\s*=/.test(html) || /var\s+D\s*=\s*dirs/.test(html))) {
+      try {
+        var chunkStart = html.search(/var\s+dirs\s*=\s*\[\s*\]/);
+        if (chunkStart < 0) chunkStart = html.search(/var\s+D\s*=\s*dirs/);
+        // Split end-tag so HTML parser does not close this script block early.
+        var chunkEnd = html.indexOf('</scr' + 'ipt>', chunkStart > 0 ? chunkStart : 0);
+        var chunk = html.slice(Math.max(0, chunkStart), chunkEnd > 0 ? chunkEnd : html.length);
+        var bag = [];
+        Array.prototype.p = Array.prototype.push;
+        (new Function('D', 'dirs', chunk + '\n;'))(bag, bag);
+        delete Array.prototype.p;
+        if (bag.length) { dirs = bag; format = 'v1-eval-chunk'; }
+      } catch (e) {
+        try { delete Array.prototype.p; } catch (e2) {}
+        appLog('eval-chunk failed: ' + e.message, true);
+      }
+    }
+
+    if (!dirs.length) {
+      appLog('No directory data found in any known format', true);
+      throw new Error('Unsupported Snap2HTML format (no SNAPDATA / D.p / p data).');
+    }
+    appLog('dirs=' + dirs.length + ' format=' + format);
+
+    // Size parser: base36 (modern) OR decimal (legacy). "-1" = error → 0
+    function parseSnapSize(s) {
+      if (s === undefined || s === null) return 0;
+      s = String(s);
+      if (s === '-1' || s === '') return 0;
+      // pure decimal (legacy files often use long decimal sizes)
+      if (/^-?\d+$/.test(s)) {
+        var n = parseInt(s, 10);
+        return isNaN(n) || n < 0 ? 0 : n;
+      }
+      // base36 (modern dataVersion 2)
+      var b = parseInt(s.toUpperCase(), 36);
+      return isNaN(b) || b < 0 ? 0 : b;
+    }
+
+    function isLegacyEntry(entry) {
+      if (!Array.isArray(entry) || entry.length < 2) return false;
+      // second-to-last is numeric total size; last is child-id string
+      return typeof entry[entry.length - 2] === 'number';
+    }
+    // Prefer explicit format, else sniff first real entry
+    var legacyMode = (format.indexOf('v1') === 0);
+    if (!legacyMode && format !== 'v2-snapdata' && format !== 'v2-p-lines') {
+      for (var si = 0; si < Math.min(dirs.length, 5); si++) {
+        if (isLegacyEntry(dirs[si])) { legacyMode = true; break; }
+      }
+    }
+    // dataVersion 2 forces modern
+    if (dataVer === '2') legacyMode = false;
+    appLog('legacyMode=' + legacyMode);
+
+    var beforeCount = allFiles.length;
+
+    if (legacyMode) {
+      // LEGACY: path in [0], files [1..len-3], total [len-2], children [len-1]
+      for (var i = 0; i < dirs.length; i++) {
+        var entry = dirs[i];
+        if (!Array.isArray(entry) || entry.length < 2) continue;
+        var info0 = String(entry[0] || '').split('*');
+        var folderPath = (info0[0] || '').replace(/\//g, '\\').replace(/\\+$/, '');
+        var fileEnd = entry.length - 2;
+        for (var j = 1; j < fileEnd; j++) {
+          var item = entry[j];
+          if (typeof item !== 'string') continue;
+          var parts = item.split('*');
+          if (parts.length < 2) continue;
+          var fname = parts[0];
+          if (!fname) continue;
+          var extL = getExt(fname);
+          var baseL = stripExt(fname);
+          allFiles.push({
+            name: baseL,
+            size: parseSnapSize(parts[1]),
+            ext: extL,
+            path: folderPath,
+            fullPath: folderPath ? folderPath + '\\' + fname : fname,
+            source: sourceName || '',
+            release: '',
+            custom: {}
+          });
+        }
+      }
+    } else {
+      // MODERN dataVersion 2:
+      // [0]=name*size*date, [1]=parentId, [2]=childIds, [3+]=files
+      // Root rows may end with a metadata object (multi-root) — skip non-strings
+      var nodes = [];
+      for (var i = 0; i < dirs.length; i++) {
+        var entry = dirs[i];
+        if (!Array.isArray(entry) || entry.length < 3) continue;
+        if (typeof entry[0] !== 'string') continue;
+        var info = String(entry[0] || '').split('*');
+        var name = info[0] || '';
+        var parentId = entry[1];
+        var files = [];
+        for (var j = 3; j < entry.length; j++) {
+          var item = entry[j];
+          if (typeof item !== 'string') continue; // skip metadata objects
+          var parts = item.split('*');
+          if (parts.length < 2) continue;
+          var fname = parts[0];
+          if (!fname) continue;
+          files.push({ name: fname, size: parseSnapSize(parts[1]), ext: getExt(fname) });
+        }
+        nodes[i] = { name: name, parentId: parentId, files: files };
+      }
+      function getPath(id) {
+        var parts = [];
+        var cur = id;
+        var seen = new Set();
+        while (cur !== undefined && cur !== null && cur !== -1 && nodes[cur]) {
+          if (seen.has(cur)) break;
+          seen.add(cur);
+          parts.unshift(nodes[cur].name);
+          cur = nodes[cur].parentId;
+        }
+        return parts.join('\\').replace(/\\\\+/g, '\\');
+      }
+      for (var i = 0; i < nodes.length; i++) {
+        if (!nodes[i]) continue;
+        var folderPath = getPath(i);
+        nodes[i].files.forEach(function(f) {
+          var raw = f.name;
+          var base = stripExt(raw);
+          var extM = f.ext || getExt(raw);
+          allFiles.push({
+            name: base, size: f.size, ext: extM,
+            path: folderPath,
+            fullPath: folderPath ? folderPath + '\\' + raw : raw,
+            source: sourceName || '',
+            release: '',
+            custom: {}
+          });
+        });
+      }
+    }
+
+    var added = allFiles.length - beforeCount;
+    appLog('files extracted: ' + added + ' (total ' + allFiles.length + ') [' + format + (appVer ? ' app ' + appVer : '') + ']');
+    if (!added) appLog('WARNING: 0 files extracted', true);
+  }
+
+  // ---- filters ----
+  minSizeInput.addEventListener('input', function() { saveFilters(); applyFilters(); });
+  nameSearch.addEventListener('input', applyFilters);
+
+  function applyFilters() {
+    var selectedExts = getSelectedExts();
+    var minGB = parseFloat(minSizeInput.value) || 0;
+    var minBytes = minGB * 1024 * 1024 * 1024;
+    var q = (nameSearch.value || '').trim().toLowerCase();
+
+    // first pass without folder filter to build folder list from matching ext/size/name
+    var base = allFiles.filter(function(f) {
+      if (selectedExts.size > 0 && !selectedExts.has(f.ext)) return false;
+      if (f.size < minBytes) return false;
+      if (q && f.name.toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+
+    // build unique folders from base
+    var folderCounts = new Map();
+    base.forEach(function(f) {
+      var p = f.path || '(root)';
+      if (!folderCounts.has(p)) folderCounts.set(p, { count: 0, size: 0 });
+      var o = folderCounts.get(p);
+      o.count++;
+      o.size += f.size;
+    });
+
+    // init folderChecked for new folders
+    folderCounts.forEach(function(_, p) {
+      if (!folderChecked.has(p)) folderChecked.set(p, true);
+    });
+
+    renderFolderList(folderCounts);
+
+    // apply folder filter
+    filtered = base.filter(function(f) {
+      var p = f.path || '(root)';
+      return folderChecked.get(p) !== false;
+    });
+
+    // sort
+    filtered.sort(function(a, b) {
+      var cmp = 0;
+      if (sortKey === 'name') cmp = a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+      else if (sortKey === 'ext') cmp = (a.ext || '').localeCompare(b.ext || '');
+      else if (sortKey === 'size') cmp = a.size - b.size;
+      else if (sortKey === 'path') cmp = a.fullPath.localeCompare(b.fullPath, undefined, { numeric: true });
+      else if (sortKey === 'release') cmp = String(a.release || '').localeCompare(String(b.release || ''), undefined, { numeric: true });
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+
+    filtered.forEach(function(f) {
+      if (!checkedMap.has(f.fullPath)) checkedMap.set(f.fullPath, true);
+    });
+
+    updateSortHeaders();
+    renderResults();
+  }
+
+  function renderFolderList(folderCounts) {
+    var paths = Array.from(folderCounts.keys()).sort(function(a, b) {
+      return a.localeCompare(b, undefined, { numeric: true });
+    });
+    if (!paths.length) {
+      folderList.innerHTML = '<div class="empty-state" style="padding:16px;">' + t('foldersEmpty') + '</div>';
+      return;
+    }
+    var html = '';
+    paths.forEach(function(p) {
+      var info = folderCounts.get(p);
+      var checked = folderChecked.get(p) !== false;
+      html += '<label class="folder-item">' +
+        '<input type="checkbox" data-folder="' + escapeHtml(p) + '"' + (checked ? ' checked' : '') + '>' +
+        '<span class="fp">' + escapeHtml(p) + '</span>' +
+        '<span class="fc">' + info.count + ' · ' + formatSize(info.size) + '</span>' +
+        '</label>';
+    });
+    folderList.innerHTML = html;
+    folderList.querySelectorAll('input[data-folder]').forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        folderChecked.set(cb.dataset.folder, cb.checked);
+        applyFilters();
+      });
+    });
+  }
+
+  document.getElementById('btnFolderAll').addEventListener('click', function() {
+    folderChecked.forEach(function(_, k) { folderChecked.set(k, true); });
+    applyFilters();
+  });
+  document.getElementById('btnFolderNone').addEventListener('click', function() {
+    folderChecked.forEach(function(_, k) { folderChecked.set(k, false); });
+    applyFilters();
+  });
+
+  // ---- sort by header click ----
+  document.querySelectorAll('th[data-sort]').forEach(function(th) {
+    th.addEventListener('click', function() {
+      var key = th.dataset.sort;
+      if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortKey = key; sortDir = key === 'size' ? 'desc' : 'asc'; }
+      applyFilters();
+    });
+  });
+
+  function updateSortHeaders() {
+    document.querySelectorAll('th[data-sort]').forEach(function(th) {
+      th.classList.remove('sorted-asc', 'sorted-desc');
+      if (th.dataset.sort === sortKey) {
+        th.classList.add(sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc');
+      }
+    });
+  }
+
+  // ---- results ----
+  function getCheckedFiles() {
+    return filtered.filter(function(f) { return checkedMap.get(f.fullPath) === true; });
+  }
+
+  function updateCheckedInfo() {
+    var list = getCheckedFiles();
+    var total = list.reduce(function(s, f) { return s + f.size; }, 0);
+    checkedInfo.textContent = list.length.toLocaleString() + ' ' + t('checked') + ' · ' + formatSize(total);
+    var has = list.length > 0;
+    btnTxt.disabled = !has;
+    btnExcel.disabled = !has;
+    btnCopy.disabled = !has;
+
+    if (!filtered.length) {
+      headerCheck.checked = false;
+      headerCheck.indeterminate = false;
+    } else {
+      var n = filtered.filter(function(f) { return checkedMap.get(f.fullPath); }).length;
+      headerCheck.checked = n === filtered.length;
+      headerCheck.indeterminate = n > 0 && n < filtered.length;
+    }
+  }
+
+  function rebuildFilterHeader() {
+    var row = document.getElementById('filterHeaderRow');
+    if (!row) return;
+    var html =
+      '<th class="col-check no-sort"><input type="checkbox" id="headerCheck" title="Select all"></th>' +
+      '<th class="col-num no-sort">#</th>' +
+      '<th data-sort="name" style="width:280px;">Name</th>' +
+      '<th data-sort="ext" class="col-ext" style="width:55px;">Ext</th>' +
+      '<th data-sort="size" class="col-size" style="width:90px; text-align:right;">Size</th>' +
+      '<th data-sort="path" class="col-path" style="width:260px;">Path</th>' +
+      '<th data-sort="release" class="col-date" style="width:100px;">Release</th>';
+    customColumns.forEach(function(c) {
+      html += '<th class="col-custom no-sort" style="width:120px;" data-custom="' + escapeHtml(c) + '">' + escapeHtml(c) + '</th>';
+    });
+    row.innerHTML = html;
+    var hc = document.getElementById('headerCheck');
+    if (hc) {
+      hc.addEventListener('change', function() {
+        var val = hc.checked;
+        filtered.forEach(function(f) { checkedMap.set(f.fullPath, val); });
+        resultsBody.querySelectorAll('.row-check').forEach(function(cb) { cb.checked = val; });
+        updateCheckedInfo();
+      });
+    }
+    row.querySelectorAll('th[data-sort]').forEach(function(th) {
+      th.addEventListener('click', function(e) {
+        if (e.target.classList.contains('col-resizer')) return;
+        var key = th.dataset.sort;
+        if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        else { sortKey = key; sortDir = key === 'size' ? 'desc' : 'asc'; }
+        applyFilters();
+      });
+    });
+    enableColumnResize(document.getElementById('filterTable'));
+  }
+
+  function renderResults() {
+    var colCount = 7 + customColumns.length;
+    var totalSize = filtered.reduce(function(s, f) { return s + f.size; }, 0);
+    stats.innerHTML = filtered.length
+      ? '<strong>' + filtered.length.toLocaleString() + '</strong> ' + t('match') + ' · ' + formatSize(totalSize)
+      : (allFiles.length ? t('noMatch') : t('statsBegin'));
+
+    if (!filtered.length) {
+      resultsBody.innerHTML = '<tr><td colspan="' + colCount + '" class="empty-state">' +
+        (allFiles.length ? t('noMatching') : t('noData')) + '</td></tr>';
+      updateCheckedInfo();
+      return;
+    }
+
+    var MAX = 5000;
+    var show = filtered.slice(0, MAX);
+    var html = '';
+    show.forEach(function(f, i) {
+      var isChecked = checkedMap.get(f.fullPath) !== false;
+      html += '<tr>' +
+        '<td class="col-check"><input type="checkbox" class="row-check" data-path="' +
+          escapeHtml(f.fullPath) + '"' + (isChecked ? ' checked' : '') + '></td>' +
+        '<td class="col-num">' + (i + 1) + '</td>' +
+        '<td class="col-name">' + escapeHtml(f.name) + '</td>' +
+        '<td class="col-ext">' + escapeHtml(f.ext || '—') + '</td>' +
+        '<td class="col-size">' + formatSize(f.size) + '</td>' +
+        '<td class="col-path">' + escapeHtml(f.path) + '</td>' +
+        '<td class="col-date">' + escapeHtml(f.release || '') + '</td>';
+      customColumns.forEach(function(c) {
+        var v = (f.custom && f.custom[c]) || '';
+        html += '<td class="col-custom">' + escapeHtml(v) + '</td>';
+      });
+      html += '</tr>';
+    });
+    if (filtered.length > MAX) {
+      html += '<tr><td colspan="' + colCount + '" style="text-align:center;padding:8px;background:#ffffcc;">' +
+        'Showing first ' + MAX.toLocaleString() + ' of ' + filtered.length.toLocaleString() +
+        '. Select All / None applies to all.</td></tr>';
+    }
+    resultsBody.innerHTML = html;
+
+    resultsBody.querySelectorAll('.row-check').forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        checkedMap.set(cb.dataset.path, cb.checked);
+        updateCheckedInfo();
+      });
+    });
+    updateCheckedInfo();
+  }
+
+  document.getElementById('btnSelectAll').addEventListener('click', function() {
+    filtered.forEach(function(f) { checkedMap.set(f.fullPath, true); });
+    resultsBody.querySelectorAll('.row-check').forEach(function(cb) { cb.checked = true; });
+    updateCheckedInfo();
+  });
+  document.getElementById('btnSelectNone').addEventListener('click', function() {
+    filtered.forEach(function(f) { checkedMap.set(f.fullPath, false); });
+    resultsBody.querySelectorAll('.row-check').forEach(function(cb) { cb.checked = false; });
+    updateCheckedInfo();
+  });
+  document.getElementById('btnInvert').addEventListener('click', function() {
+    filtered.forEach(function(f) {
+      checkedMap.set(f.fullPath, !checkedMap.get(f.fullPath));
+    });
+    resultsBody.querySelectorAll('.row-check').forEach(function(cb) {
+      cb.checked = !!checkedMap.get(cb.dataset.path);
+    });
+    updateCheckedInfo();
+  });
+  headerCheck.addEventListener('change', function() {
+    var val = headerCheck.checked;
+    filtered.forEach(function(f) { checkedMap.set(f.fullPath, val); });
+    resultsBody.querySelectorAll('.row-check').forEach(function(cb) { cb.checked = val; });
+    updateCheckedInfo();
+  });
+
+  // ---- export ----
+  function exportPath(f) {
+    var mode = pathMode.value;
+    // Name column is always without extension; path exports keep the real filename with ext
+    var fileWithExt = f.name + (f.ext ? '.' + f.ext : '');
+    if (mode === 'name') return f.name;
+    if (mode === 'relative') return (f.path ? f.path + '\\' : '') + fileWithExt;
+    return f.fullPath || ((f.path ? f.path + '\\' : '') + fileWithExt);
+  }
+
+  function downloadBlob(content, filename, mime) {
+    var blob = new Blob([content], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function setStatus(msg, isErr) {
+    statusText.textContent = msg;
+    statusText.className = isErr ? 'err' : 'ok';
+  }
+
+  function buildExportCols() {
+    var cols = [];
+    if (document.getElementById('colName').checked) cols.push('Name');
+    if (document.getElementById('colExt').checked) cols.push('Ext');
+    if (document.getElementById('colSize').checked) cols.push('Size');
+    if (document.getElementById('colPath').checked) cols.push('Path');
+    if (document.getElementById('colFull').checked) cols.push('FullPath');
+    if (document.getElementById('colRelease') && document.getElementById('colRelease').checked) cols.push('Release');
+    if (document.getElementById('colCustomExp') && document.getElementById('colCustomExp').checked) {
+      customColumns.forEach(function(c) { cols.push(c); });
+    }
+    return cols;
+  }
+  function buildExportCells(f, cols) {
+    var cells = [];
+    cols.forEach(function(c) {
+      if (c === 'Name') cells.push(f.name);
+      else if (c === 'Ext') cells.push(f.ext || '');
+      else if (c === 'Size') cells.push(formatSize(f.size));
+      else if (c === 'Path') cells.push(f.path || '');
+      else if (c === 'FullPath') cells.push(exportPath(f));
+      else if (c === 'Release') cells.push(f.release || '');
+      else cells.push((f.custom && f.custom[c]) || '');
+    });
+    return cells;
+  }
+
+  btnTxt.addEventListener('click', function() {
+    var list = getCheckedFiles();
+    if (!list.length) return;
+    var cols = buildExportCols();
+    var lines = list.map(function(f) {
+      if (cols.length === 1 && cols[0] === 'FullPath') return exportPath(f);
+      return buildExportCells(f, cols).join('\t');
+    });
+    downloadBlob(cols.join('\t') + '\n' + lines.join('\n'), 'snap2html_list.txt', 'text/plain;charset=utf-8');
+    setStatus(t('exportedTxt', { n: list.length.toLocaleString() }));
+  });
+
+  btnExcel.addEventListener('click', function() {
+    var list = getCheckedFiles();
+    if (!list.length) return;
+    var cols = buildExportCols();
+    var rows = list.map(function(f) {
+      return buildExportCells(f, cols).map(function(c) {
+        return '"' + String(c).replace(/"/g, '""') + '"';
+      }).join(',');
+    });
+    downloadBlob('\uFEFF' + cols.join(',') + '\n' + rows.join('\n'), 'snap2html_list.csv', 'text/csv;charset=utf-8');
+    setStatus(t('exportedCsv', { n: list.length.toLocaleString() }));
+  });
+
+  btnCopy.addEventListener('click', async function() {
+    var list = getCheckedFiles();
+    if (!list.length) return;
+    var text = list.map(function(f) { return exportPath(f); }).join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      setStatus(t('copied', { n: list.length.toLocaleString() }));
+    } catch (e) {
+      setStatus(t('clipboardDenied'), true);
+    }
+  });
+
+  // ---- Tool switcher ----
+  var panelFilter = document.getElementById('panelFilter');
+  var panelClone = document.getElementById('panelClone');
+  var panelEnhance = document.getElementById('panelEnhance');
+  var panelMerge = document.getElementById('panelMerge');
+  var tabFilter = document.getElementById('tabFilter');
+  var tabClone = document.getElementById('tabClone');
+  var tabEnhance = document.getElementById('tabEnhance');
+  var tabMerge = document.getElementById('tabMerge');
+
+  function isMobileUi() {
+    return window.matchMedia && window.matchMedia('(max-width: 600px)').matches;
+  }
+  function switchTool(name) {
+    var map = {
+      filter: panelFilter,
+      clone: panelClone,
+      enhance: panelEnhance,
+      merge: panelMerge,
+      final: document.getElementById('panelFinal'),
+      group: document.getElementById('panelGroup')
+    };
+    Object.keys(map).forEach(function(k) {
+      if (map[k]) map[k].classList.toggle('panel-hidden', k !== name);
+    });
+    [tabFilter, tabClone, tabEnhance, tabMerge, document.getElementById('tabFinal'), document.getElementById('tabGroup')].forEach(function(tab) {
+      if (!tab) return;
+      tab.classList.toggle('active', tab.dataset.tool === name);
+    });
+    var mobileMsg = document.getElementById('cloneMobileMsg');
+    var desktopUi = document.getElementById('cloneDesktopUi');
+    if (name === 'clone') {
+      var mobile = isMobileUi();
+      if (mobileMsg) mobileMsg.style.display = mobile ? 'block' : 'none';
+      if (desktopUi) desktopUi.style.display = mobile ? 'none' : 'block';
+      setStatus(mobile ? 'Clone: desktop only' : 'Snap2HTML Clone — choose a folder');
+    } else if (name === 'enhance') {
+      setStatus('Enhance Data — load an exported TXT/CSV');
+    } else if (name === 'merge') {
+      setStatus('Merge & Compare — load two exported lists');
+    } else {
+      setStatus(t('ready'));
+    }
+    appLog('tool=' + name);
+  }
+  document.getElementById('tabFinal').addEventListener('click', function() { switchTool('final'); });
+  document.getElementById('tabGroup').addEventListener('click', function() { switchTool('group'); });
+  if (tabFilter) tabFilter.addEventListener('click', function() { switchTool('filter'); });
+  if (tabClone) tabClone.addEventListener('click', function() { switchTool('clone'); });
+  if (tabEnhance) tabEnhance.addEventListener('click', function() { switchTool('enhance'); });
+  if (tabMerge) tabMerge.addEventListener('click', function() { switchTool('merge'); });
+
+  var btnCopyLogs = document.getElementById('btnCopyLogs');
+  if (btnCopyLogs) {
+    btnCopyLogs.addEventListener('click', function() {
+      var text = appLogs.length ? appLogs.join('\n') : '(no logs yet)';
+      try {
+        var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'snap2html_filter_logs.txt'; a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {}
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          setStatus('Logs exported (' + appLogs.length + ' lines)');
+        }).catch(function() { setStatus('Logs downloaded'); });
+      } else setStatus('Logs downloaded');
+      appLog('logs exported');
+    });
+  }
+
+  // ---- Snap2HTML Clone generator ----
+  function decToBase36(n) {
+    n = Math.max(0, Math.floor(Number(n) || 0));
+    return n.toString(36).toUpperCase();
+  }
+
+  var cloneFiles = []; // { relativePath, name, size, lastModified }
+
+  var btnPickFolder = document.getElementById('btnPickFolder');
+  var folderInput = document.getElementById('folderInput');
+  var btnGenerateSnap = document.getElementById('btnGenerateSnap');
+  var cloneStats = document.getElementById('cloneStats');
+  var cloneTitle = document.getElementById('cloneTitle');
+
+  if (btnPickFolder && folderInput) {
+    btnPickFolder.addEventListener('click', function() { folderInput.click(); });
+    folderInput.addEventListener('change', function() {
+      cloneFiles = [];
+      var files = folderInput.files;
+      if (!files || !files.length) {
+        cloneStats.style.display = 'none';
+        btnGenerateSnap.disabled = true;
+        return;
+      }
+      var totalBytes = 0;
+      for (var i = 0; i < files.length; i++) {
+        var f = files[i];
+        var rel = f.webkitRelativePath || f.name;
+        cloneFiles.push({
+          relativePath: rel.replace(/\//g, '\\'),
+          name: f.name,
+          size: f.size || 0,
+          lastModified: f.lastModified || Date.now()
+        });
+        totalBytes += f.size || 0;
+      }
+      var rootName = (cloneFiles[0].relativePath.split('\\')[0]) || 'Snapshot';
+      if (cloneTitle && !cloneTitle.value) {
+        cloneTitle.value = 'Snapshot of ' + rootName;
+      }
+      cloneStats.style.display = 'block';
+      cloneStats.innerHTML =
+        '<strong>' + cloneFiles.length.toLocaleString() + '</strong> files · ' +
+        formatSize(totalBytes) +
+        '<br><span style="color:var(--muted)">' + escapeHtml(rootName) + '</span>';
+      btnGenerateSnap.disabled = false;
+      setStatus('Folder ready: ' + cloneFiles.length.toLocaleString() + ' files');
+    });
+  }
+
+  /**
+   * Build Snap2HTML dataVersion-2 dirs array from flat file list.
+   * Each dir entry: [ "name*size*date", parentId, "childId*childId*", "file*size*date", ... ]
+   */
+  function buildSnapDirs(fileList) {
+    // Map folder path -> { name, parentPath, files: [], children: Set }
+    var folderMap = new Map();
+    function ensureFolder(path) {
+      path = path || '';
+      if (folderMap.has(path)) return folderMap.get(path);
+      var parts = path ? path.split('\\').filter(Boolean) : [];
+      var name = parts.length ? parts[parts.length - 1] : (fileList[0] ? fileList[0].relativePath.split('\\')[0] : 'Root');
+      // root: empty path means the top folder name from first segment
+      if (!path && fileList.length) {
+        name = fileList[0].relativePath.split('\\')[0] || 'Root';
+      }
+      var parentPath = parts.length > 1 ? parts.slice(0, -1).join('\\') : (parts.length === 1 ? '' : null);
+      var node = { path: path, name: name, parentPath: path === '' ? null : (parts.length > 1 ? parts.slice(0, -1).join('\\') : ''), files: [], childPaths: [] };
+      if (path === '' && parts.length === 0) {
+        // synthetic root using first path segment
+        node.name = name;
+        node.parentPath = null;
+      }
+      folderMap.set(path, node);
+      return node;
+    }
+
+    // Always create root as first path segment container
+    var rootName = 'Root';
+    if (fileList.length) {
+      rootName = fileList[0].relativePath.split('\\')[0] || 'Root';
+    }
+    // Use root path key '' for the top folder
+    folderMap.set('', { path: '', name: rootName, parentPath: null, files: [], childPaths: [] });
+
+    fileList.forEach(function(f) {
+      var parts = f.relativePath.split('\\').filter(Boolean);
+      if (parts.length < 1) return;
+      // file is in folder of all but last segment; if only 1 segment, file is in root
+      var folderPath = parts.length > 1 ? parts.slice(0, -1).join('\\') : '';
+      // ensure chain of folders from root
+      if (parts.length > 1) {
+        for (var d = 1; d < parts.length; d++) {
+          var sub = parts.slice(0, d).join('\\');
+          if (!folderMap.has(sub)) {
+            var pParts = parts.slice(0, d);
+            var parent = d > 1 ? parts.slice(0, d - 1).join('\\') : '';
+            folderMap.set(sub, {
+              path: sub,
+              name: pParts[pParts.length - 1],
+              parentPath: parent,
+              files: [],
+              childPaths: []
+            });
+          }
+        }
+      }
+      var folder = folderMap.get(folderPath);
+      if (!folder) {
+        folder = { path: folderPath, name: folderPath.split('\\').pop() || rootName, parentPath: '', files: [], childPaths: [] };
+        folderMap.set(folderPath, folder);
+      }
+      folder.files.push(f);
+    });
+
+    // link children
+    folderMap.forEach(function(node, path) {
+      if (node.parentPath !== null && node.parentPath !== undefined && folderMap.has(node.parentPath) && path !== node.parentPath) {
+        var parent = folderMap.get(node.parentPath);
+        if (parent.childPaths.indexOf(path) < 0) parent.childPaths.push(path);
+      }
+    });
+
+    // Stable order: root first, then BFS
+    var ordered = [];
+    var pathToIndex = new Map();
+    var queue = [''];
+    var seen = new Set();
+    while (queue.length) {
+      var p = queue.shift();
+      if (seen.has(p) || !folderMap.has(p)) continue;
+      seen.add(p);
+      pathToIndex.set(p, ordered.length);
+      ordered.push(folderMap.get(p));
+      var node = folderMap.get(p);
+      node.childPaths.sort().forEach(function(cp) { queue.push(cp); });
+    }
+    // any orphans
+    folderMap.forEach(function(node, path) {
+      if (!seen.has(path)) {
+        pathToIndex.set(path, ordered.length);
+        ordered.push(node);
+      }
+    });
+
+    var dirs = ordered.map(function(node) {
+      var totalSize = 0;
+      var maxDate = 0;
+      node.files.forEach(function(f) {
+        totalSize += f.size;
+        if (f.lastModified > maxDate) maxDate = f.lastModified;
+      });
+      // include child folder sizes approximately? Snap2HTML stores dir size as sum — we use files only here
+      var info = node.name + '*' + decToBase36(totalSize) + '*' + decToBase36(Math.floor((maxDate || Date.now()) / 1000));
+      var parentId = node.parentPath === null || node.parentPath === undefined ? -1 : (pathToIndex.has(node.parentPath) ? pathToIndex.get(node.parentPath) : -1);
+      if (node.path === '') parentId = -1;
+      var childIds = node.childPaths
+        .map(function(cp) { return pathToIndex.get(cp); })
+        .filter(function(id) { return id !== undefined; })
+        .join('*');
+      var entry = [info, parentId, childIds];
+      node.files
+        .slice()
+        .sort(function(a, b) { return a.name.localeCompare(b.name); })
+        .forEach(function(f) {
+          entry.push(f.name + '*' + decToBase36(f.size) + '*' + decToBase36(Math.floor((f.lastModified || Date.now()) / 1000)));
+        });
+      return entry;
+    });
+
+    return dirs;
+  }
+
+  function buildSnapHtml(title, fileList, dirs) {
+    var numFiles = fileList.length;
+    var numDirs = dirs.length;
+    var bytes = fileList.reduce(function(s, f) { return s + f.size; }, 0);
+    var timestamp = Math.floor(Date.now() / 1000);
+    var safeTitle = String(title || 'Snapshot').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
+    var snapData = dirs.map(function(d) {
+      return 'p(' + JSON.stringify(d) + ')';
+    }).join('\n');
+
+    // Simple standalone viewer + compatible SNAPDATA for Filter tool
+    return '<!DOCTYPE HTML>\n' +
+      '<!-- Generated by Snap2HTML Clone (Eng. Hussein Al-Haj Ali) -->\n' +
+      '<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">\n' +
+      '<title>' + escapeHtml(title || 'Snapshot') + '</title>\n' +
+      '<style>\n' +
+      'body{font-family:Verdana,sans-serif;margin:0;background:#e8f0e0;color:#222}\n' +
+      'header{background:linear-gradient(#f6f8f9,#d7dee3);padding:12px 16px;border-bottom:1px solid #aaa}\n' +
+      'h1{margin:0;font-size:1.25rem} .meta{font-size:12px;color:#555;margin-top:4px}\n' +
+      'main{padding:12px 16px} details{margin:4px 0} summary{cursor:pointer;font-weight:bold}\n' +
+      'ul{margin:4px 0 8px 1.2rem;padding:0} li{font-size:13px;margin:2px 0}\n' +
+      '.sz{color:#060;font-family:monospace;margin-left:8px}\n' +
+      '</style></head><body>\n' +
+      '<header><h1>' + escapeHtml(title || 'Snapshot') + '</h1>\n' +
+      '<div class="meta">' + numFiles.toLocaleString() + ' files · ' + numDirs.toLocaleString() + ' folders · ' +
+      formatSize(bytes) + ' · Snap2HTML-compatible data</div></header>\n' +
+      '<main id="tree"></main>\n' +
+      '<script>\n' +
+      'window.snap = {\n' +
+      '  title: "' + safeTitle + '",\n' +
+      '  timestamp: ' + timestamp + ',\n' +
+      '  numFiles: ' + numFiles + ',\n' +
+      '  numDirs: ' + numDirs + ',\n' +
+      '  bytes: ' + bytes + ',\n' +
+      '  appName: "Snap2HTML Clone",\n' +
+      '  appLink: "",\n' +
+      '  appVersion: "1.0",\n' +
+      '  dataVersion: 2\n' +
+      '};\n' +
+      '(function(){\n' +
+      '  var dirs = [];\n' +
+      '  function p(d){ dirs.push(d); }\n' +
+      '  // [SNAPDATA]\n' +
+      snapData + '\n' +
+      '  // [/SNAPDATA]\n' +
+      '  function b36(s){ return parseInt(String(s||"0"),36)||0; }\n' +
+      '  function fmt(n){ if(n>=1e9)return (n/1e9).toFixed(2)+" GB"; if(n>=1e6)return (n/1e6).toFixed(2)+" MB"; if(n>=1e3)return (n/1e3).toFixed(1)+" KB"; return n+" B"; }\n' +
+      '  function render(id, el){\n' +
+      '    var e = dirs[id]; if(!e) return;\n' +
+      '    var name = String(e[0]||"").split("*")[0];\n' +
+      '    var det = document.createElement("details");\n' +
+      '    if(id===0) det.open = true;\n' +
+      '    var sum = document.createElement("summary");\n' +
+      '    sum.textContent = "📁 " + name;\n' +
+      '    det.appendChild(sum);\n' +
+      '    var ul = document.createElement("ul");\n' +
+      '    for(var i=3;i<e.length;i++){\n' +
+      '      var p = String(e[i]).split("*");\n' +
+      '      var li = document.createElement("li");\n' +
+      '      li.innerHTML = "📄 " + p[0] + " <span class=sz>" + fmt(b36(p[1])) + "</span>";\n' +
+      '      ul.appendChild(li);\n' +
+      '    }\n' +
+      '    det.appendChild(ul);\n' +
+      '    var kids = String(e[2]||"").split("*").filter(Boolean);\n' +
+      '    kids.forEach(function(k){ var c=document.createElement("div"); render(+k,c); det.appendChild(c); });\n' +
+      '    el.appendChild(det);\n' +
+      '  }\n' +
+      '  render(0, document.getElementById("tree"));\n' +
+      '})();\n' +
+      '<\/script>\n</body></html>';
+  }
+
+  if (btnGenerateSnap) {
+    btnGenerateSnap.addEventListener('click', function() {
+      if (!cloneFiles.length) return;
+      try {
+        var title = (cloneTitle && cloneTitle.value) || 'Snapshot';
+        var dirs = buildSnapDirs(cloneFiles);
+        var html = buildSnapHtml(title, cloneFiles, dirs);
+        var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        var safeName = title.replace(/[^\w\-]+/g, '_').slice(0, 40) || 'snapshot';
+        a.href = url;
+        a.download = safeName + '.html';
+        a.click();
+        URL.revokeObjectURL(url);
+        setStatus('Snapshot generated: ' + cloneFiles.length.toLocaleString() + ' files');
+      } catch (err) {
+        console.error(err);
+        setStatus('Generate failed: ' + err.message, true);
+      }
+    });
+  }
+
+  // ---- Column resize (Excel-like) ----
+  function enableColumnResize(table) {
+    if (!table) return;
+    var ths = table.querySelectorAll('thead th');
+    ths.forEach(function(th) {
+      if (th.querySelector('.col-resizer')) return;
+      if (th.classList.contains('col-check') || th.classList.contains('col-num')) return;
+      var handle = document.createElement('div');
+      handle.className = 'col-resizer';
+      th.appendChild(handle);
+      handle.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        handle.classList.add('active');
+        document.body.classList.add('col-resizing');
+        var startX = e.pageX;
+        var startW = th.offsetWidth;
+        function onMove(ev) {
+          var w = Math.max(40, startW + (ev.pageX - startX));
+          th.style.width = w + 'px';
+          th.style.minWidth = w + 'px';
+        }
+        function onUp() {
+          handle.classList.remove('active');
+          document.body.classList.remove('col-resizing');
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
+  }
+  enableColumnResize(document.getElementById('filterTable'));
+
+  // ---- Custom columns ----
+  function renderCustomColList() {
+    var box = document.getElementById('customColList');
+    if (!box) return;
+    if (!customColumns.length) { box.innerHTML = ''; return; }
+    box.innerHTML = customColumns.map(function(c, i) {
+      return '<label style="display:inline-flex;align-items:center;gap:3px;">' +
+        escapeHtml(c) +
+        ' <button type="button" class="btn" data-rm-col="' + i + '" style="min-width:auto;padding:1px 6px;">×</button></label>';
+    }).join(' ');
+    box.querySelectorAll('[data-rm-col]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        customColumns.splice(+btn.getAttribute('data-rm-col'), 1);
+        renderCustomColList();
+        rebuildFilterHeader();
+        renderResults();
+      });
+    });
+  }
+  var btnAddCustomCol = document.getElementById('btnAddCustomCol');
+  if (btnAddCustomCol) {
+    btnAddCustomCol.addEventListener('click', function() {
+      var inp = document.getElementById('customColName');
+      var name = (inp && inp.value || '').trim();
+      if (!name) return;
+      if (customColumns.indexOf(name) >= 0) return;
+      customColumns.push(name);
+      if (inp) inp.value = '';
+      renderCustomColList();
+      rebuildFilterHeader();
+      renderResults();
+      setStatus('Custom column added: ' + name);
+    });
+  }
+
+  // ---- Shared list file parser (TXT tab / CSV) ----
+  function parseDelimitedText(text) {
+    text = String(text || '').replace(/^\uFEFF/, '');
+    var lines = text.split(/\r?\n/).filter(function(l) { return l.trim().length; });
+    appLog('parseDelimitedText: ' + lines.length + ' non-empty lines, total chars=' + text.length);
+    if (!lines.length) return { headers: [], rows: [] };
+    var delim = lines[0].indexOf('\t') >= 0 ? '\t' : ',';
+    appLog('delimiter detected: ' + (delim === '\t' ? 'TAB' : 'COMMA'));
+    function splitLine(line) {
+      if (delim === '\t') return line.split('\t');
+      var out = [], cur = '', inQ = false;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (ch === '"') {
+          if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+          else inQ = !inQ;
+        } else if (ch === ',' && !inQ) { out.push(cur); cur = ''; }
+        else cur += ch;
+      }
+      out.push(cur);
+      return out;
+    }
+    var headers = splitLine(lines[0]).map(function(h) { return h.trim(); });
+    appLog('headers: ' + headers.join(' | '));
+    var rows = [];
+    for (var r = 1; r < lines.length; r++) {
+      var cells = splitLine(lines[r]);
+      var obj = { _checked: true };
+      headers.forEach(function(h, i) { obj[h] = cells[i] != null ? cells[i] : ''; });
+      rows.push(obj);
+    }
+    return { headers: headers, rows: rows };
+  }
+
+  function findNameHeader(headers) {
+    var keys = ['Name', 'name', 'الاسم', 'Nom', 'Nombre', 'Ad', 'Имя', '名称', '名前', '이름', 'नाम'];
+    for (var i = 0; i < keys.length; i++) {
+      if (headers.indexOf(keys[i]) >= 0) return keys[i];
+    }
+    return headers[0] || 'Name';
+  }
+
+  /** Strip extension from the Name column of parsed list rows */
+  function stripNamesInRows(headers, rows) {
+    var nk = findNameHeader(headers);
+    var n = 0;
+    rows.forEach(function(r) {
+      if (r[nk] == null) return;
+      var before = String(r[nk]);
+      var after = stripExt(before);
+      if (after !== before) { r[nk] = after; n++; }
+    });
+    appLog('stripNamesInRows: column="' + nk + '", stripped ' + n + ' of ' + rows.length);
+    return nk;
+  }
+
+  // ---- Enhance Data ----
+  var enhanceData = { headers: [], rows: [] };
+  var enhanceFile = document.getElementById('enhanceFile');
+  var btnEnhanceBrowse = document.getElementById('btnEnhanceBrowse');
+  var enhanceLoading = document.getElementById('enhanceLoading');
+  if (btnEnhanceBrowse && enhanceFile) {
+    btnEnhanceBrowse.addEventListener('click', function() {
+      appLog('enhance: browse clicked');
+      enhanceFile.value = '';
+      enhanceFile.click();
+    });
+    enhanceFile.addEventListener('change', function() {
+      var f = enhanceFile.files && enhanceFile.files[0];
+      appLog('enhance: file change, files=' + (enhanceFile.files ? enhanceFile.files.length : 0));
+      if (!f) { appLog('enhance: no file selected', true); return; }
+      appLog('enhance: reading ' + f.name + ' size=' + f.size);
+      if (enhanceLoading) enhanceLoading.classList.add('show');
+      setStatus('Enhance: reading…');
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          enhanceData = parseDelimitedText(e.target.result);
+          if (!enhanceData.headers.length) throw new Error('No columns found');
+          var nameKey = stripNamesInRows(enhanceData.headers, enhanceData.rows);
+          if (!nameKey) throw new Error('Name column required');
+          var info = document.getElementById('enhanceFileInfo');
+          if (info) {
+            info.style.display = 'inline-block';
+            info.textContent = f.name + ' · ' + enhanceData.rows.length + ' rows · ' + enhanceData.headers.length + ' cols';
+          }
+          renderEnhanceTable();
+          var bt = document.getElementById('btnEnhanceTxt');
+          var bc = document.getElementById('btnEnhanceCsv');
+          if (bt) bt.disabled = !enhanceData.rows.length;
+          if (bc) bc.disabled = !enhanceData.rows.length;
+          setStatus('Enhance: loaded ' + enhanceData.rows.length + ' rows');
+          appLog('enhance: OK rows=' + enhanceData.rows.length);
+        } catch (err) {
+          appLog('enhance failed: ' + err.message, true);
+          setStatus('Enhance load failed: ' + err.message, true);
+        }
+        if (enhanceLoading) enhanceLoading.classList.remove('show');
+      };
+      reader.onerror = function() {
+        appLog('enhance FileReader error', true);
+        setStatus('Enhance: failed to read file', true);
+        if (enhanceLoading) enhanceLoading.classList.remove('show');
+      };
+      reader.readAsText(f);
+    });
+  }
+
+  function renderEnhanceTable() {
+    var head = document.getElementById('enhanceHead');
+    var body = document.getElementById('enhanceBody');
+    if (!head || !body) return;
+    if (!enhanceData.rows.length) {
+      head.innerHTML = '';
+      body.innerHTML = '<tr><td class="empty-state">Load an exported list to edit</td></tr>';
+      return;
+    }
+    var h = '<th class="col-check no-sort"><input type="checkbox" id="enhanceHeaderCheck" checked></th><th class="col-num no-sort">#</th>';
+    enhanceData.headers.forEach(function(col) {
+      h += '<th style="min-width:100px;">' + escapeHtml(col) + '</th>';
+    });
+    head.innerHTML = h;
+    var html = '';
+    enhanceData.rows.forEach(function(row, i) {
+      html += '<tr><td class="col-check"><input type="checkbox" class="enh-check" data-i="' + i + '"' +
+        (row._checked !== false ? ' checked' : '') + '></td><td class="col-num">' + (i + 1) + '</td>';
+      enhanceData.headers.forEach(function(col) {
+        html += '<td><input class="editable-cell enh-cell" data-i="' + i + '" data-col="' +
+          escapeHtml(col) + '" value="' + escapeHtml(row[col] || '') + '"></td>';
+      });
+      html += '</tr>';
+    });
+    body.innerHTML = html;
+    enableColumnResize(document.getElementById('enhanceTable'));
+    body.querySelectorAll('.enh-check').forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        enhanceData.rows[+cb.dataset.i]._checked = cb.checked;
+      });
+    });
+    body.querySelectorAll('.enh-cell').forEach(function(inp) {
+      inp.addEventListener('input', function() {
+        var i = +inp.dataset.i;
+        var col = inp.dataset.col;
+        if (enhanceData.rows[i]) enhanceData.rows[i][col] = inp.value;
+      });
+    });
+    var ehc = document.getElementById('enhanceHeaderCheck');
+    if (ehc) {
+      ehc.addEventListener('change', function() {
+        enhanceData.rows.forEach(function(r) { r._checked = ehc.checked; });
+        body.querySelectorAll('.enh-check').forEach(function(cb) { cb.checked = ehc.checked; });
+      });
+    }
+  }
+
+  function exportEnhance(asCsv) {
+    var rows = enhanceData.rows.filter(function(r) { return r._checked !== false; });
+    if (!rows.length) return;
+    var cols = enhanceData.headers;
+    if (asCsv) {
+      var lines = rows.map(function(r) {
+        return cols.map(function(c) {
+          return '"' + String(r[c] || '').replace(/"/g, '""') + '"';
+        }).join(',');
+      });
+      downloadBlob('\uFEFF' + cols.join(',') + '\n' + lines.join('\n'), 'enhanced_list.csv', 'text/csv;charset=utf-8');
+    } else {
+      var lines2 = rows.map(function(r) {
+        return cols.map(function(c) { return r[c] || ''; }).join('\t');
+      });
+      downloadBlob(cols.join('\t') + '\n' + lines2.join('\n'), 'enhanced_list.txt', 'text/plain;charset=utf-8');
+    }
+    setStatus('Enhance exported ' + rows.length + ' rows');
+  }
+  var btnEnhanceSelectAll = document.getElementById('btnEnhanceSelectAll');
+  var btnEnhanceSelectNone = document.getElementById('btnEnhanceSelectNone');
+  if (btnEnhanceSelectAll) btnEnhanceSelectAll.addEventListener('click', function() {
+    enhanceData.rows.forEach(function(r) { r._checked = true; });
+    renderEnhanceTable();
+  });
+  if (btnEnhanceSelectNone) btnEnhanceSelectNone.addEventListener('click', function() {
+    enhanceData.rows.forEach(function(r) { r._checked = false; });
+    renderEnhanceTable();
+  });
+  var btnEnhanceTxt = document.getElementById('btnEnhanceTxt');
+  var btnEnhanceCsv = document.getElementById('btnEnhanceCsv');
+  if (btnEnhanceTxt) btnEnhanceTxt.addEventListener('click', function() { exportEnhance(false); });
+  if (btnEnhanceCsv) btnEnhanceCsv.addEventListener('click', function() { exportEnhance(true); });
+
+  // ---- Merge & Compare ----
+  var mergeA = { headers: [], rows: [], name: '' };
+  var mergeB = { headers: [], rows: [], name: '' };
+  var mergeMissing = [];
+  var mergeLoading = document.getElementById('mergeLoading');
+  var mergeLoadingText = document.getElementById('mergeLoadingText');
+
+  function loadMergeFile(side, file) {
+    appLog('merge: load side=' + side + ' name=' + file.name + ' size=' + file.size + ' type=' + (file.type || ''));
+    if (mergeLoading) mergeLoading.classList.add('show');
+    if (mergeLoadingText) mergeLoadingText.textContent = 'Reading file ' + side + '…';
+    setStatus('Merge: reading file ' + side + '…');
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var text = e.target.result;
+        appLog('merge: side=' + side + ' text length=' + (text ? text.length : 0));
+        var parsed = parseDelimitedText(text);
+        if (!parsed.headers.length) throw new Error('Empty file or no header row');
+        stripNamesInRows(parsed.headers, parsed.rows);
+        if (side === 'A') {
+          mergeA = { headers: parsed.headers, rows: parsed.rows, name: file.name };
+          var ia = document.getElementById('mergeInfoA');
+          if (ia) ia.textContent = file.name + ' (' + parsed.rows.length + ' rows)';
+          mergeSortedA = parsed.rows.slice();
+          renderMergeSide('A', mergeA, mergeSortedA);
+        } else {
+          mergeB = { headers: parsed.headers, rows: parsed.rows, name: file.name };
+          var ib = document.getElementById('mergeInfoB');
+          if (ib) ib.textContent = file.name + ' (' + parsed.rows.length + ' rows)';
+          mergeSortedB = parsed.rows.slice();
+          renderMergeSide('B', mergeB, mergeSortedB);
+        }
+        refreshMergeSortOptions();
+        var btnC = document.getElementById('btnMergeCompare');
+        if (btnC) btnC.disabled = !(mergeA.rows.length && mergeB.rows.length);
+        var canExport = !!(mergeA.rows.length || mergeB.rows.length);
+        var btnT = document.getElementById('btnMergeExportTxt');
+        var btnE = document.getElementById('btnMergeExportCsv');
+        if (btnT) btnT.disabled = !canExport;
+        if (btnE) btnE.disabled = !canExport;
+        setStatus('Merge: loaded file ' + side + ' (' + parsed.rows.length + ' rows)');
+        appLog('merge: side=' + side + ' OK rows=' + parsed.rows.length + ' cols=' + parsed.headers.length);
+      } catch (err) {
+        appLog('merge load failed side=' + side + ': ' + err.message, true);
+        setStatus('Merge load failed (' + side + '): ' + err.message, true);
+      }
+      if (mergeLoading) mergeLoading.classList.remove('show');
+    };
+    reader.onerror = function() {
+      appLog('merge FileReader error side=' + side, true);
+      setStatus('Merge: failed to read file ' + side, true);
+      if (mergeLoading) mergeLoading.classList.remove('show');
+    };
+    try {
+      reader.readAsText(file);
+    } catch (err2) {
+      appLog('merge readAsText threw: ' + err2.message, true);
+      setStatus('Merge: ' + err2.message, true);
+      if (mergeLoading) mergeLoading.classList.remove('show');
+    }
+  }
+
+  function refreshMergeSortOptions() {
+    var sel = document.getElementById('mergeSortCol');
+    if (!sel) return;
+    var set = {};
+    mergeA.headers.concat(mergeB.headers).forEach(function(h) { set[h] = true; });
+    var cols = Object.keys(set);
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">—</option>' + cols.map(function(c) {
+      return '<option value="' + escapeHtml(c) + '"' + (c === cur ? ' selected' : '') + '>' + escapeHtml(c) + '</option>';
+    }).join('');
+  }
+
+  function renderMergeSide(which, data, sortedRows) {
+    var headId = which === 'A' ? 'mergeHeadA' : which === 'B' ? 'mergeHeadB' : 'mergeHeadMiss';
+    var bodyId = which === 'A' ? 'mergeBodyA' : which === 'B' ? 'mergeBodyB' : 'mergeBodyMiss';
+    var tableId = which === 'A' ? 'mergeTableA' : which === 'B' ? 'mergeTableB' : 'mergeTableMiss';
+    var head = document.getElementById(headId);
+    var body = document.getElementById(bodyId);
+    if (!head || !body) return;
+    var headers = data.headers || [];
+    if (!sortedRows || !sortedRows.length) {
+      head.innerHTML = '';
+      body.innerHTML = '<tr><td class="empty-state">—</td></tr>';
+      return;
+    }
+    head.innerHTML = '<tr><th class="col-check">☑</th><th>#</th>' +
+      headers.map(function(h) { return '<th style="min-width:80px;">' + escapeHtml(h) + '</th>'; }).join('') + '</tr>';
+    var html = '';
+    sortedRows.forEach(function(row, i) {
+      html += '<tr><td class="col-check"><input type="checkbox" class="merge-chk" data-side="' + which +
+        '" data-i="' + i + '"' + (row._checked !== false ? ' checked' : '') + '></td><td>' + (i + 1) + '</td>';
+      headers.forEach(function(h) {
+        html += '<td>' + escapeHtml(row[h] || '') + '</td>';
+      });
+      html += '</tr>';
+    });
+    body.innerHTML = html;
+    body.querySelectorAll('.merge-chk').forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        var idx = +cb.dataset.i;
+        if (sortedRows[idx]) sortedRows[idx]._checked = cb.checked;
+      });
+    });
+    enableColumnResize(document.getElementById(tableId));
+  }
+
+  var mergeSortedA = [];
+  var mergeSortedB = [];
+
+  function runMergeCompare() {
+    var col = document.getElementById('mergeSortCol').value;
+    if (!col) { setStatus('Pick a sort column', true); return; }
+    function hasVal(row) {
+      var v = row[col];
+      return v != null && String(v).trim() !== '';
+    }
+    function sortRows(rows) {
+      return rows.slice().sort(function(a, b) {
+        var av = String(a[col] || '');
+        var bv = String(b[col] || '');
+        var cmp = av.localeCompare(bv, undefined, { numeric: true });
+        if (cmp !== 0) return cmp;
+        var nameKey = findNameHeader(Object.keys(a));
+        return String(a[nameKey] || '').localeCompare(String(b[nameKey] || ''), undefined, { numeric: true });
+      });
+    }
+    var aOk = [], aMiss = [], bOk = [], bMiss = [];
+    mergeA.rows.forEach(function(r) {
+      r._side = 'A';
+      if (hasVal(r)) aOk.push(r); else aMiss.push(r);
+    });
+    mergeB.rows.forEach(function(r) {
+      r._side = 'B';
+      if (hasVal(r)) bOk.push(r); else bMiss.push(r);
+    });
+    mergeSortedA = sortRows(aOk);
+    mergeSortedB = sortRows(bOk);
+    var nameKeyA = findNameHeader(mergeA.headers);
+    var nameKeyB = findNameHeader(mergeB.headers);
+    mergeMissing = aMiss.concat(bMiss).sort(function(a, b) {
+      var an = a[nameKeyA] || a[nameKeyB] || a[findNameHeader(Object.keys(a))] || '';
+      var bn = b[nameKeyA] || b[nameKeyB] || b[findNameHeader(Object.keys(b))] || '';
+      return String(an).localeCompare(String(bn), undefined, { numeric: true });
+    });
+    renderMergeSide('A', mergeA, mergeSortedA);
+    renderMergeSide('B', mergeB, mergeSortedB);
+    var missHeaders = mergeA.headers.length ? mergeA.headers : mergeB.headers;
+    renderMergeSide('M', { headers: missHeaders }, mergeMissing);
+    document.getElementById('btnMergeExportTxt').disabled = false;
+    document.getElementById('btnMergeExportCsv').disabled = false;
+    setStatus('Compared · A:' + mergeSortedA.length + ' B:' + mergeSortedB.length + ' missing:' + mergeMissing.length);
+  }
+
+  function exportMerge(asCsv) {
+    var selected = [];
+    mergeSortedA.forEach(function(r) { if (r._checked !== false) selected.push(r); });
+    mergeSortedB.forEach(function(r) { if (r._checked !== false) selected.push(r); });
+    mergeMissing.forEach(function(r) { if (r._checked !== false) selected.push(r); });
+    if (!selected.length) { setStatus('Nothing selected to merge', true); return; }
+    var colSet = {};
+    selected.forEach(function(r) {
+      Object.keys(r).forEach(function(k) {
+        if (k.charAt(0) === '_') return;
+        colSet[k] = true;
+      });
+    });
+    var cols = Object.keys(colSet);
+    if (asCsv) {
+      var lines = selected.map(function(r) {
+        return cols.map(function(c) {
+          return '"' + String(r[c] || '').replace(/"/g, '""') + '"';
+        }).join(',');
+      });
+      downloadBlob('\uFEFF' + cols.join(',') + '\n' + lines.join('\n'), 'merged_list.csv', 'text/csv;charset=utf-8');
+    } else {
+      var lines2 = selected.map(function(r) {
+        return cols.map(function(c) { return r[c] || ''; }).join('\t');
+      });
+      downloadBlob(cols.join('\t') + '\n' + lines2.join('\n'), 'merged_list.txt', 'text/plain;charset=utf-8');
+    }
+    setStatus('Merged export: ' + selected.length + ' rows');
+  }
+
+  var btnMergeA = document.getElementById('btnMergeA');
+  var btnMergeB = document.getElementById('btnMergeB');
+  var mergeFileA = document.getElementById('mergeFileA');
+  var mergeFileB = document.getElementById('mergeFileB');
+  if (btnMergeA && mergeFileA) {
+    btnMergeA.addEventListener('click', function() {
+      appLog('merge: browse A clicked');
+      mergeFileA.value = '';
+      mergeFileA.click();
+    });
+    mergeFileA.addEventListener('change', function() {
+      appLog('merge: A change, count=' + (mergeFileA.files ? mergeFileA.files.length : 0));
+      if (mergeFileA.files && mergeFileA.files[0]) loadMergeFile('A', mergeFileA.files[0]);
+      else appLog('merge: A no file in input', true);
+    });
+  } else {
+    appLog('merge: btnMergeA or mergeFileA missing in DOM', true);
+  }
+  if (btnMergeB && mergeFileB) {
+    btnMergeB.addEventListener('click', function() {
+      appLog('merge: browse B clicked');
+      mergeFileB.value = '';
+      mergeFileB.click();
+    });
+    mergeFileB.addEventListener('change', function() {
+      appLog('merge: B change, count=' + (mergeFileB.files ? mergeFileB.files.length : 0));
+      if (mergeFileB.files && mergeFileB.files[0]) loadMergeFile('B', mergeFileB.files[0]);
+      else appLog('merge: B no file in input', true);
+    });
+  } else {
+    appLog('merge: btnMergeB or mergeFileB missing in DOM', true);
+  }
+  var btnMergeCompare = document.getElementById('btnMergeCompare');
+  if (btnMergeCompare) btnMergeCompare.addEventListener('click', runMergeCompare);
+  var btnMergeExportTxt = document.getElementById('btnMergeExportTxt');
+  var btnMergeExportCsv = document.getElementById('btnMergeExportCsv');
+  if (btnMergeExportTxt) btnMergeExportTxt.addEventListener('click', function() { exportMerge(false); });
+  if (btnMergeExportCsv) btnMergeExportCsv.addEventListener('click', function() { exportMerge(true); });
+
+  // ===== Grouper + Finalizer (v15) =====
+  var $ = function(i) { return document.getElementById(i); };
+  var uid = 0;
+  function pSize(v) {
+    if (typeof v === 'number') return v;
+    var m = String(v || '').match(/([\d.,]+)\s*(TB|GB|MB|KB|B)?/i); if (!m) return 0;
+    var u = { TB: 1099511627776, GB: 1073741824, MB: 1048576, KB: 1024, B: 1 }[(m[2] || 'B').toUpperCase()];
+    return Math.round((parseFloat(m[1].replace(/,/g, '')) || 0) * u);
+  }
+  function loadItems(files, cb) {
+    var out = [], pend = files.length; if (!pend) return; loadItems.proj = null;
+    [].forEach.call(files, function(f) {
+      var r = new FileReader();
+      r.onload = function(e) {
+        try {
+          var n = f.name.toLowerCase();
+          if (/\.html?$/.test(n)) {
+            var keep = allFiles; allFiles = [];
+            try { parseSnap2HTML(e.target.result, f.name); out = out.concat(allFiles); } finally { allFiles = keep; }
+          } else if (/\.json$/.test(n)) {
+            var pj = JSON.parse(e.target.result); loadItems.proj = pj; out = out.concat(pj.items || pj);
+          } else {
+            parseDelimitedText(e.target.result).rows.forEach(function(row) {
+              var g = function(k) { for (var h in row) if (h.toLowerCase().replace(/\s/g, '') === k) return row[h] || ''; return ''; };
+              if (!g('name')) return;
+              out.push({ name: g('name'), ext: g('ext'), size: pSize(g('size')), path: g('path'), fullPath: g('fullpath') || g('path'), source: f.name });
+            });
+          }
+        } catch (err) { setStatus('Load error: ' + err.message, true); }
+        if (--pend === 0) {
+          out.forEach(function(x) { if (x.id) uid = Math.max(uid, x.id); else x.id = ++uid; if (x.checked === undefined) x.checked = true; });
+          out.sort(function(a, b) { return (a.fullPath || a.name).localeCompare(b.fullPath || b.name, undefined, { numeric: true }); });
+          cb(out);
+        }
+      };
+      r.readAsText(f);
+    });
+  }
+  function hook(btn, inp, fn) { $(btn).onclick = function() { $(inp).click(); }; $(inp).onchange = function() { fn(this.files); this.value = ''; }; }
+  function rowsHtml(list, selFn, chk) {
+    return list.slice(0, 3000).map(function(x) {
+      return '<div class="ri' + (selFn(x) ? ' sel' : '') + '" data-id="' + x.id + '"><input type="checkbox" ' + (chk(x) ? 'checked' : '') + '><span class="n" title="' + escapeHtml(x.fullPath || '') + '">' + escapeHtml(x.title || x.name) + '</span><span class="s">' + formatSize(x.size) + '</span></div>';
+    }).join('') + (list.length > 3000 ? '<div class="ri">… ' + (list.length - 3000) + ' more — use search</div>' : '');
+  }
+  function tbl(rows, csv) {
+    var hd = ['Name', 'Ext', 'Size', 'Path', 'Full path', 'Files'];
+    var q = function(v) { v = String(v == null ? '' : v); return csv ? '"' + v.replace(/"/g, '""') + '"' : v.replace(/[\t\r\n]+/g, ' '); };
+    return (csv ? '\uFEFF' : '') + [hd].concat(rows).map(function(r) { return r.map(q).join(csv ? ',' : '\t'); }).join('\r\n');
+  }
+
+  // ---------- Grouper ----------
+  var G = { items: [], groups: [], sel: {} };
+  function gVisible() {
+    var q = $('gSearch').value.toLowerCase();
+    return G.items.filter(function(x) { return !x.gid && (!q || (x.fullPath || x.name).toLowerCase().indexOf(q) >= 0); });
+  }
+  function gRender() {
+    var v = gVisible();
+    $('gList').innerHTML = rowsHtml(v, function(x) { return G.sel[x.id]; }, function(x) { return G.sel[x.id]; });
+    $('gInfo').textContent = v.length + ' ungrouped shown · ' + Object.keys(G.sel).length + ' selected · ' + G.groups.length + ' groups';
+    $('gGroups').innerHTML = G.groups.map(function(g) {
+      return '<div class="ri" data-g="' + g.id + '"><span class="n">📁 ' + escapeHtml(g.name) + ' (' + g.ids.length + ')</span><span class="s">' + formatSize(g.size) + '</span><button class="btn" data-un="' + g.id + '">Ungroup</button></div>';
+    }).join('') || '<div class="empty-state">No groups yet</div>';
+  }
+  $('gList').onclick = function(e) {
+    var r = e.target.closest('.ri'); if (!r || !r.dataset.id) return;
+    var id = r.dataset.id;
+    if (e.shiftKey && G.last) {
+      var v = gVisible(), a = v.findIndex(function(x) { return x.id == G.last; }), b = v.findIndex(function(x) { return x.id == id; });
+      if (a >= 0 && b >= 0) v.slice(Math.min(a, b), Math.max(a, b) + 1).forEach(function(x) { G.sel[x.id] = 1; });
+    } else if (G.sel[id]) delete G.sel[id]; else G.sel[id] = 1;
+    G.last = id; gRender();
+  };
+  $('gGroups').onclick = function(e) {
+    var id = e.target.dataset.un; if (!id) return;
+    G.groups = G.groups.filter(function(g) { return g.id != id; });
+    G.items.forEach(function(x) { if (x.gid == id) x.gid = 0; }); gRender();
+  };
+  $('gAll').onclick = function() { gVisible().slice(0, 3000).forEach(function(x) { G.sel[x.id] = 1; }); gRender(); };
+  $('gNone').onclick = function() { G.sel = {}; gRender(); };
+  $('gSearch').oninput = gRender;
+  $('gDo').onclick = function() {
+    var its = G.items.filter(function(x) { return G.sel[x.id] && !x.gid; });
+    if (its.length < 2) { setStatus('Select 2 or more items to group', true); return; }
+    var same = its.every(function(x) { return x.path === its[0].path; });
+    var def = same && its[0].path ? its[0].path.split('\\').pop() : its[0].name;
+    var name = prompt('Group name (e.g. the series name):', def); if (!name) return;
+    var g = { id: ++uid, name: name, ids: its.map(function(x) { return x.id; }), size: 0, path: same ? its[0].path : '' };
+    its.forEach(function(x) { x.gid = g.id; g.size += x.size || 0; });
+    G.groups.push(g); G.sel = {}; gRender();
+  };
+  function gRows() {
+    var r = G.groups.map(function(g) { return [g.name, '', formatSize(g.size), g.path, g.path, g.ids.length]; });
+    G.items.forEach(function(x) { if (!x.gid) r.push([x.name, x.ext, formatSize(x.size), x.path, x.fullPath, 1]); });
+    return r;
+  }
+  $('gTxt').onclick = function() { downloadBlob(tbl(gRows(), false), 'grouped.txt', 'text/plain'); };
+  $('gCsv').onclick = function() { downloadBlob(tbl(gRows(), true), 'grouped.csv', 'text/csv'); };
+  hook('gLoad', 'gFile', function(f) {
+    if (G.groups.length && !confirm('Loading replaces your current groups. Save the session first if needed. Continue?')) return;
+    loadItems(f, function(o) { var pj = loadItems.proj; G.items = o; G.groups = pj && pj.groups ? pj.groups : []; G.sel = {}; G.last = 0; gRender(); setStatus(o.length + ' items loaded' + (G.groups.length ? ', ' + G.groups.length + ' groups restored' : '')); });
+  });
+  $('gSave').onclick = function() { downloadBlob(JSON.stringify({ items: G.items, groups: G.groups }), 'grouper-session.json', 'application/json'); };
+
+  // ---------- Finalizer ----------
+  var TYPES = { movie: 'Movie', series: 'Series', game: 'Game', movie_u: 'Movie in a Universe', series_u: 'Series in a Universe', game_s: 'Game in a Series', music: 'Music / Album', software: 'Software / App', book: 'Book / Document', other: 'Other file' };
+  var F = { items: [], cur: null };
+  function fGuess(n, ext) {
+    ext = String(ext || '').toLowerCase();
+    var y = (n.match(/\b(19|20)\d{2}\b/) || [])[0] || '';
+    var t = n.replace(/[._]+/g, ' ').replace(/[\[(]?\b(19|20)\d{2}\b[\])]?.*$/, '').replace(/\b(S\d+E\d+|1080p|720p|2160p|4k|bluray|brrip|webrip|web-dl|x264|x265|hevc)\b.*$/i, '').replace(/\s+/g, ' ').trim();
+    return { title: t || n, year: y, type: /\bS\d+E\d+\b/i.test(n) ? 'series' : /^(mkv|mp4|avi|mov|wmv|m4v|ts|webm)$/.test(ext) ? 'movie' : /^(mp3|flac|wav|aac|ogg|m4a)$/.test(ext) ? 'music' : /^(exe|msi|dmg|apk)$/.test(ext) ? 'software' : /^(pdf|epub|mobi|djvu)$/.test(ext) ? 'book' : '' };
+  }
+  function fVisible() {
+    var q = $('fSearch').value.toLowerCase();
+    return F.items.filter(function(x) { return !q || (x.title || x.name).toLowerCase().indexOf(q) >= 0; });
+  }
+  function fRender() {
+    $('fList').innerHTML = rowsHtml(fVisible(), function(x) { return x === F.cur; }, function(x) { return x.checked; });
+    var c = F.items.filter(function(x) { return x.checked; }), d = c.filter(function(x) { return x.type && !x.auto; });
+    $('fProg').textContent = d.length + ' of ' + c.length + ' finalized';
+  }
+  var FLD = [['title', 'Name', 'text', 1], ['year', 'Year', 'number', 0, 'movie series game movie_u series_u game_s'], ['platform', 'Platform', 'text', 0, 'game game_s'],
+    ['universe', 'Universe / Series', 'text', 0, 'movie_u series_u game_s', 'uniList'], ['part', 'Order / Part #', 'number', 0, 'movie_u series_u game_s'], ['imdb', 'IMDb link', 'url', 0]];
+  var ADV = [['wall', 'Wallpaper (path)'], ['sub', 'Subtitle (path)'], ['genre', 'Genre'], ['quality', 'Quality'], ['lang', 'Language'], ['rating', 'Rating'], ['tags', 'Tags'], ['notes', 'Notes']];
+  function fShow(x) {
+    F.cur = x; if (!x) return;
+    if (x.title === undefined) { var g = fGuess(x.name, x.ext); x.title = g.title; if (!x.year) x.year = g.year; if (!x.type && g.type) { x.type = g.type; x.auto = 1; } }
+    var h = '<div class="fld"><label>Type' + (x.auto ? ' ✨' : '') + '</label><select data-k="type"><option value="">— choose —</option>' + Object.keys(TYPES).map(function(k) { return '<option value="' + k + '"' + (x.type === k ? ' selected' : '') + '>' + TYPES[k] + '</option>'; }).join('') + '</select></div>';
+    FLD.forEach(function(f) {
+      h += '<div class="fld" data-for="' + (f[4] || '') + '"><label>' + f[1] + '</label><input type="' + f[2] + '" data-k="' + f[0] + '"' + (f[5] ? ' list="' + f[5] + '"' : '') + ' value="' + escapeHtml(String(x[f[0]] || '')) + '"></div>';
+    });
+    h += '<datalist id="uniList">' + Object.keys(F.items.reduce(function(o, i) { if (i.universe) o[i.universe] = 1; return o; }, {})).map(function(u) { return '<option value="' + escapeHtml(u) + '">'; }).join('') + '</datalist>';
+    h += '<div class="fld"><label>Poster</label><input type="file" id="fPoster" accept="image/*">' + (x.poster ? '<img src="' + x.poster + '" style="height:50px">' : '') + '</div>';
+    h += '<div class="fld"><label>Size</label><span>' + formatSize(x.size) + (x.count ? ' · ' + x.count + ' files' : '') + '</span></div>';
+    h += '<details class="adv"><summary>Advanced (optional)</summary>' + ADV.map(function(f) { return '<div class="fld"><label>' + f[1] + '</label><input type="text" data-k="' + f[0] + '" value="' + escapeHtml(String(x[f[0]] || '')) + '"></div>'; }).join('') + '</details>';
+    $('fForm').innerHTML = h; fToggle(); fRender();
+    $('fPoster').onchange = function() { fPoster(this.files[0], x); };
+  }
+  function fToggle() {
+    var t = F.cur && F.cur.type;
+    [].forEach.call($('fForm').querySelectorAll('[data-for]'), function(d) { var a = d.dataset.for; d.style.display = !a || (t && a.split(' ').indexOf(t) >= 0) ? '' : 'none'; });
+  }
+  function fPoster(file, x) {
+    if (!file) return; var im = new Image(), u = URL.createObjectURL(file);
+    im.onload = function() {
+      var w = Math.min(300, im.width), c = document.createElement('canvas'); c.width = w; c.height = Math.round(im.height * w / im.width);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); x.poster = c.toDataURL('image/jpeg', 0.8); URL.revokeObjectURL(u); fShow(x);
+    }; im.src = u;
+  }
+  $('fForm').oninput = $('fForm').onchange = function(e) {
+    var k = e.target.dataset && e.target.dataset.k; if (!k || !F.cur) return;
+    F.cur[k] = e.target.value; F.cur.auto = 0; if (k === 'type') fToggle(); fRender();
+  };
+  $('fList').onclick = function(e) {
+    var r = e.target.closest('.ri'); if (!r || !r.dataset.id) return;
+    var x = F.items.filter(function(i) { return i.id == r.dataset.id; })[0];
+    if (e.target.type === 'checkbox') x.checked = e.target.checked; fShow(x);
+  };
+  $('fSearch').oninput = fRender;
+  $('fAll').onclick = function() { fVisible().forEach(function(x) { x.checked = true; }); fRender(); };
+  $('fNone').onclick = function() { fVisible().forEach(function(x) { x.checked = false; }); fRender(); };
+  function fStep(d) { if (F.cur) F.cur.auto = 0;
+    var v = fVisible(), i = v.indexOf(F.cur) + d; if (v[i]) fShow(v[i]); }
+  $('fPrev').onclick = function() { fStep(-1); }; $('fNext').onclick = function() { fStep(1); };
+  window.addEventListener('beforeunload', function(e) { if (G.groups.length || F.items.length) { e.preventDefault(); e.returnValue = ''; } });
+  hook('fLoad', 'fFile', function(f) { loadItems(f, function(o) { F.items = o; F.cur = null; fRender(); setStatus(o.length + ' items loaded'); }); });
+  $('fSave').onclick = function() { downloadBlob(JSON.stringify({ items: F.items }), 'finalizer-project.json', 'application/json'); };
+  $('gToFin').onclick = function() {
+    F.items = G.groups.map(function(g) { return { id: ++uid, name: g.name, ext: '', size: g.size, path: g.path, fullPath: g.path, count: g.ids.length, checked: true, type: 'series', auto: 1 }; })
+      .concat(G.items.filter(function(x) { return !x.gid; }).map(function(x) { return Object.assign({}, x, { id: ++uid }); }));
+    F.cur = null; fRender(); switchTool('final');
+  };
+  $('fBuild').onclick = function() {
+    var list = F.items.filter(function(x) { return x.checked; }).map(function(x) {
+      var g = x.title === undefined ? fGuess(x.name, x.ext) : null, ty = x.type || (g && g.type) || 'other';
+      return { title: x.title || x.name, type: ty, tl: TYPES[ty], year: x.year || (g && g.year) || '', platform: x.platform || '', universe: x.universe || '', part: x.part || '', imdb: x.imdb || '', poster: x.poster || '', wall: x.wall || '', sub: x.sub || '', genre: x.genre || '', quality: x.quality || '', lang: x.lang || '', rating: x.rating || '', tags: x.tags || '', notes: x.notes || '', size: x.size || 0, sizeT: formatSize(x.size), path: x.fullPath || '' };
+    });
+    var lib = LIBTPL.replace('__DATA__', function() { return JSON.stringify(list).replace(/</g, '\\u003c'); });
+    downloadBlob(lib, 'library.html', 'text/html'); setStatus(list.length + ' items in library');
+  };
+  var LIBTPL = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Library</title><style>' +
+    'body{font-family:Segoe UI,Tahoma,sans-serif;margin:0;background:#14161c;color:#e8e8ee}header{position:sticky;top:0;background:#1d2029;padding:10px;display:flex;gap:8px;flex-wrap:wrap;z-index:2}' +
+    'input,select{padding:6px;background:#2a2e3a;color:#fff;border:1px solid #444;border-radius:4px}#g{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;padding:10px}' +
+    '.c{background:#1d2029;border-radius:6px;overflow:hidden;cursor:pointer}.c img,.ph{width:100%;aspect-ratio:2/3;object-fit:cover;background:#2a2e3a;display:flex;align-items:center;justify-content:center;font-size:40px}' +
+    '.c div{padding:6px 8px;font-size:13px}.m{opacity:.7;font-size:11px}a{color:#7ab8ff}</style></head><body><header><input id="q" placeholder="Search…"><select id="t"><option value="">All types</option></select>' +
+    '<select id="y"><option value="">All years</option></select><select id="s"><option value="title">Sort: name</option><option value="year">Sort: year</option><option value="size">Sort: size</option><option value="universe">Sort: universe</option></select><span id="n"></span></header><div id="g"></div>' +
+    '<script>var D=__DATA__;var $=function(i){return document.getElementById(i)};function fill(id,k){var v=[];D.forEach(function(d){if(d[k]&&v.indexOf(d[k])<0)v.push(d[k])});v.sort().forEach(function(x){var o=document.createElement("option");o.value=o.textContent=x;$(id).appendChild(o)})}' +
+    'fill("t","tl");fill("y","year");function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",\'"\':"&quot;"}[c]})}' +
+    'function draw(){var q=$("q").value.toLowerCase(),t=$("t").value,y=$("y").value,s=$("s").value;var r=D.filter(function(d){return(!q||(d.title+" "+d.universe+" "+d.tags+" "+d.genre).toLowerCase().indexOf(q)>=0)&&(!t||d.tl===t)&&(!y||d.year===y)});' +
+    'r.sort(function(a,b){if(s==="size")return b.size-a.size;if(s==="universe")return(a.universe||"~").localeCompare(b.universe||"~")||(a.part-b.part)||a.title.localeCompare(b.title);return String(a[s]).localeCompare(String(b[s]),undefined,{numeric:true})});' +
+    '$("n").textContent=r.length+" items";$("g").innerHTML=r.map(function(d,i){var x=[d.year,d.platform,d.universe&&d.universe+(d.part?" #"+d.part:""),d.genre,d.quality,d.lang,d.rating,d.notes].filter(Boolean).map(esc).join(" · ");' +
+    'return\'<div class="c" onclick="this.querySelector(\\\'.x\\\').hidden=!this.querySelector(\\\'.x\\\').hidden">\'+(d.poster?\'<img src="\'+d.poster+\'">\':\'<div class="ph">🎞</div>\')+\'<div><b>\'+esc(d.title)+\'</b><div class="m">\'+esc(d.tl)+" · "+d.sizeT+\'</div><div class="m x" hidden>\'+x+(d.imdb?\' <a href="\'+esc(d.imdb)+\'" target="_blank">IMDb</a>\':"")+\'</div></div></div>\'}).join("")}' +
+    '["q","t","y","s"].forEach(function(i){$(i).oninput=draw});draw()<\/script></body></html>';
+
+  // Avoid double-binding old header sort if rebuild replaces it
+  try { rebuildFilterHeader(); } catch (e) {}
+})();
+</script>
+</body>
+</html>
