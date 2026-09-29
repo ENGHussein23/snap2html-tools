@@ -6,6 +6,16 @@ No installation, no server, no upload: open `Snap2HTML_Filter.html` in a desktop
 
 **Version:** 15 · **UI languages:** 12 (English, العربية, Français, Deutsch, Español, Türkçe, Português, Русский, 中文, 日本語, 한국어, हिन्दी) · **Themes:** 9 decade-based themes (1970s → 2050s)
 
+## 🌐 Open Source
+
+This project is **open source** and available for everyone to use, modify, and improve.
+
+⭐ **If you find it useful, please give the repository a Star.**  
+🍴 **Fork it** if you want to add features, customize it, or build your own version.  
+💡 Have a suggestion, found a bug, or have an idea for improvement? Open an **Issue**, submit a **Pull Request**, or contact me.
+
+Every contribution and piece of feedback is welcome and appreciated.
+
 ## Tools (tabs)
 
 | # | Tab | What it does |
@@ -48,6 +58,73 @@ Load snapshots, exported lists, Grouper output, or a saved project. Every item s
 
 ---
 
-**العربية:** أداة HTML واحدة تعمل بدون إنترنت للتعامل مع لقطات Snap2HTML: فلترة الملفات وتصديرها، تجميع الحلقات في مسلسل واحد، تصنيف العناصر (فيلم، مسلسل، لعبة…) وإنشاء مكتبة HTML قابلة للبحث والفلترة. جميع البيانات تبقى على جهازك.
+# العربية 🇸🇾
 
-*Design by Eng. Hussein Al-Haj Ali.*
+## Snap2HTML Tools — أدوات الفلترة والاستخراج
+
+أداة تعمل من خلال **ملف HTML واحد وبدون إنترنت** للتعامل مع لقطات مجلدات **Snap2HTML**.
+
+تتيح لك الأداة تحميل لقطة واحدة أو عدة لقطات، فلترة واستخراج قوائم الملفات، تجميع الحلقات ضمن مسلسل واحد، تصنيف العناصر (فيلم، مسلسل، لعبة...) وإنشاء مكتبة HTML قابلة للبحث والفلترة.
+
+**لا تحتاج إلى تثبيت أو سيرفر أو رفع ملفات:** افتح `Snap2HTML_Filter.html` من متصفح الكمبيوتر أو الهاتف، وجميع البيانات تتم معالجتها محليًا على جهازك.
+
+### 🌐 المشروع مفتوح المصدر
+
+هذا المشروع **مفتوح المصدر (Open Source)** ومتاح للجميع للاستخدام والتعديل والتطوير.
+
+⭐ إذا وجدت الأداة مفيدة، **لا تنسَ إعطاء المشروع Star على GitHub** لدعم المشروع.  
+🍴 يمكنك **عمل Fork** إذا أردت إضافة ميزات جديدة أو تعديل الأداة أو إنشاء نسخة خاصة بك.  
+💡 لديك اقتراح، فكرة لتطوير الأداة، أو وجدت مشكلة؟ يمكنك فتح **Issue** أو إرسال **Pull Request** أو التواصل معي مباشرة.
+
+أي مساهمة أو ملاحظة منكم مرحب بها ومقدّرة ❤️
+
+### 🛠️ الأدوات
+
+| # | الأداة | ماذا تفعل؟ |
+|---|---|---|
+| 1 | **Filter & Extractor** | تحميل عدة ملفات Snap2HTML، الفلترة حسب الامتداد والحجم والاسم والمجلد، ثم تصدير النتائج إلى TXT / Excel-CSV أو نسخها. |
+| 2 | **Snap2HTML Clone** | فحص مجلد من الكمبيوتر وإنشاء Snapshot متوافق مع Snap2HTML. تعمل هذه الميزة على الكمبيوتر فقط. |
+| 3 | **Enhance Data** | فتح ملفات TXT/CSV المصدرة وتعديل الخلايا ثم إعادة تصديرها. |
+| 4 | **Merge & Compare** | مقارنة قائمتين مصدرتين، ترتيبهما حسب أحد الأعمدة، معرفة العناصر الناقصة واختيار العناصر من أي قائمة ثم دمجها وتصديرها. |
+| 5 | **Finalizer** | تصنيف العناصر وإنشاء صفحة مكتبة مستقلة قابلة للبحث والفلترة. |
+| 6 | **Grouper** | اختيار عدة عناصر، مثل حلقات مسلسل، وتجميعها ضمن عنصر واحد. |
+
+### 📦 أداة Grouper
+
+1. حمّل ملف Snap2HTML بصيغة `.html` أو ملف `.txt` / `.csv` أو جلسة محفوظة بصيغة `.json`.
+2. اختر عدة عناصر واضغط **Group selected**.
+3. تختفي العناصر المجمعة من القائمة اليسرى وتظهر كعنصر واحد في الجهة اليمنى، مع الاسم وعدد الملفات والحجم الإجمالي.
+4. يمكنك استخدام **Ungroup** لإلغاء التجميع، وحفظ الجلسة للمتابعة لاحقًا، أو إرسال النتيجة إلى **Finalizer**.
+
+### 🏗️ أداة Finalizer
+
+يمكنك تحميل Snapshots أو القوائم المصدرة أو نتائج Grouper أو مشروع محفوظ، ثم تعديل نوع ومعلومات كل عنصر.
+
+- **Finalize & Build Library:** إنشاء ملف `library.html` مستقل يعمل بدون إنترنت، ويحتوي على البحث والفلاتر والترتيب وشبكة البوسترات والتفاصيل القابلة للتوسيع.
+- **Save project:** حفظ العمل بصيغة JSON للعودة إليه لاحقًا.
+
+### 📥 الملفات المدعومة
+
+- Snap2HTML `.html` بجميع صيغ البيانات القديمة والحديثة.
+- TXT أو CSV صادر من الأداة، ويجب أن يحتوي على عمود `Name`.
+- جلسات Grouper ومشاريع Finalizer بصيغة `.json`.
+
+### 📝 ملاحظات
+
+- تعمل الأداة على الإصدارات الحالية من Chrome وEdge وFirefox وSafari.
+- ميزة فحص المجلدات في **Clone** تحتاج إلى متصفح على الكمبيوتر.
+- تضمين البوسترات داخل `library.html` قد يزيد حجم الملف.
+- مسارات الخلفيات والترجمات يتم الاحتفاظ بها كمسارات.
+- واجهة Grouper وFinalizer حاليًا باللغة الإنجليزية فقط.
+
+---
+
+## ❤️ Support & Contribute
+
+If this tool saves you time or helps you organize your collection:
+
+⭐ **Star the repository** · 🍴 **Fork it** · 🐛 **Report bugs** · 💡 **Share suggestions** · 🔧 **Submit a Pull Request**
+
+إذا ساعدتك الأداة أو وفرت عليك الوقت: **اعمل Star للمشروع، اعمل Fork، شارك اقتراحاتك، وأرسل Pull Request للمساهمة في تطويرها.**
+
+**Design & Development by Eng. Hussein Al-Haj Ali.**
